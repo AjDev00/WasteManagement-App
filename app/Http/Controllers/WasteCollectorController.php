@@ -14,7 +14,7 @@ class WasteCollectorController extends Controller
             'firstname' => 'required|string|min:3',
             'lastname' => 'required|string|min:3',
             'email' => 'required|email|unique:waste_collectors,email',
-            'phone_number' => 'required|string|min:10|max:15',
+            'phone_number' => 'required|min:10|max:15',
             'password' => 'required|string|min:8',
             'verifying_id' => 'required|string',
             'verify_type' => 'required|string',
@@ -57,4 +57,87 @@ class WasteCollectorController extends Controller
             'data' => $wasteCollector
         ]);
     }
+
+    // Show a single waste collector with the ID.
+    public function showWasteCollector($id){
+        $wasteCollector = WasteCollector::find($id);
+
+        if(!$wasteCollector){
+            return response()->json([
+                'status' => false,
+                'message' => 'Waste Collector do not exist!',
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $wasteCollector
+        ]);
+    }
+
+
+    // Show all waste collectors.
+    public function showAllWasteCollector(){
+        $wasteCollector = WasteCollector::all();
+
+        if($wasteCollector->isNotEmpty()){
+            return response()->json([
+                'status' => true,
+                'data' => $wasteCollector
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'No waste collector found!'
+        ]);
+    }
+
+   public function updateWasteCollector(Request $request, $id){
+    $wasteCollector = WasteCollector::find($id);
+
+    if($wasteCollector === null){
+        return response()->json([
+            'status' => false,
+            'message' => 'Waste collector not found'
+        ]);
+    }
+
+    $validator = Validator::make($request->all(), [
+       'firstname' => 'required|string|min:3',
+        'lastname' => 'required|string|min:3',
+        'email' => 'required|email|unique:waste_collectors,email',
+        'phone_number' => 'required|min:10|max:15',
+        'password' => 'required|string|min:8',
+        'bank_name' => 'required|string',
+        'bank_account_number' => 'required|string|min:10|max:15',
+        'is_verified' => 'required|boolean'
+    ]);
+
+    if($validator->fails()){
+        return response()->json([
+            'status' => false,
+            'message' => 'Please fix the following errors',
+            'errors' => $validator->errors()
+        ]);
+    }
+
+        $wasteCollector->firstname = $request->firstname;
+        $wasteCollector->lastname = $request->lastname;
+        $wasteCollector->email = $request->email;
+        $wasteCollector->phone_number = $request->phone_number;
+         if($request->filled('password')){
+            $wasteCollector->password = bcrypt($request->password);
+        }
+        $wasteCollector->bank_name = $request->bank_name;
+        $wasteCollector->bank_account_number = $request->bank_account_number;
+        $wasteCollector->is_verified = $request->is_verified;
+
+        $wasteCollector->save();
+        return response()->json([
+            'status' => true,
+            'message' => 'Updated Successfully',
+            'data' => $wasteCollector
+        ]);
+   }
 }

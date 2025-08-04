@@ -14,7 +14,7 @@ class ResidentController extends Controller
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|min:3',
             'address' => 'required|string|min:5',
-            'phone_number' => 'required|string|min:10|max:15',
+            'phone_number' => 'required|min:10|max:15',
             'email' => 'required|email|unique:residents,email',
             'password' => 'required|string|min:8' ,
             'created_by' => 'required|string',
@@ -98,7 +98,7 @@ class ResidentController extends Controller
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|min:3',
             'address' => 'required|string|min:5',
-            'phone_number' => 'required|string|min:10|max:15',
+            'phone_number' => 'required|min:10|max:15',
             'email' => 'required|email|unique:residents,email,',
             'password' => 'nullable|string|min:8',
             'created_by' => 'required|string',
