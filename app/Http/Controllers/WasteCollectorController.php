@@ -4,57 +4,61 @@ namespace App\Http\Controllers;
 
 use App\Models\WasteCollector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class WasteCollectorController extends Controller
 {
     // Store a newly created waste collector.
     public function storeWasteCollector(Request $request){
-        $validator = Validator::make($request->all(), [
+        $fields = $request->validate( [
             'firstname' => 'required|string|min:3',
             'lastname' => 'required|string|min:3',
             'email' => 'required|email|unique:waste_collectors,email',
             'phone_number' => 'required|min:10|max:15',
-            'password' => 'required|string|min:8',
-            'verifying_id' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+            'verifying_id' => 'required|string|unique:waste_collectors,verifying_id',
             'verify_type' => 'required|string',
             'verifying_image' => 'required',
-            'bank_name' => 'required|string',
-            'bank_account_number' => 'required|string|min:10|max:15',
-            'is_verified' => 'required|boolean',
-            'verified_by' => 'string',
         ]);
 
-        //error handling
-        if($validator->fails()){
-            return response()->json([
-                'status' => false,
-                'message' => 'Please fix the following errors',
-                'errors' => $validator->errors()
-            ]);
-        }
+        //hash the password
+        $fields['password'] = Hash::make($fields['password']);
 
-        // Create the waste collector
-        $wasteCollector = new WasteCollector();
-        $wasteCollector->firstname = $request->firstname;
-        $wasteCollector->lastname = $request->lastname;
-        $wasteCollector->email = $request->email;
-        $wasteCollector->phone_number = $request->phone_number;
-        $wasteCollector->password = bcrypt($request->password);
-        $wasteCollector->verifying_id = $request->verifying_id;
-        $wasteCollector->verify_type = $request->verify_type;
-        $wasteCollector->verifying_image = $request->verifying_image;
-        $wasteCollector->bank_name = $request->bank_name;
-        $wasteCollector->bank_account_number = $request->bank_account_number;
-        $wasteCollector->is_verified = $request->is_verified;
-        $wasteCollector->verified_by = $request->verified_by;
+        $waste_collector = WasteCollector::create($fields);
 
-        $wasteCollector->save();
+        $token = $waste_collector->createToken($request->firstname);
 
         return response()->json([
             'status' => true,
             'message' => 'Waste collector registered successfully',
-            'data' => $wasteCollector
+            'data' => $waste_collector,
+            'token' => $token->plainTextToken
+        ]);
+    }
+
+    public function loginWasteCollector(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $waste_collector = WasteCollector::where('email', $request->email)->first();
+
+        if (!$waste_collector || !Hash::check($request->password, $waste_collector->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid email or password',
+            ]);
+        }
+
+        $token = $waste_collector->createToken($waste_collector->email);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+            'data' => $waste_collector,
+            'token' => $token->plainTextToken
         ]);
     }
 

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SupervisorController;
@@ -15,14 +17,20 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/resi', function (Request $request) {
+    return $request->resident();
+})->middleware('auth:resident');
+
 // Residents routes.
-Route::post('/resident', [ResidentController::class, 'storeResident']); // Route for creating a resident
-Route::get('/resident/{id}', [ResidentController::class, 'showResident']); // Route for showing a single resident by ID
-Route::get('/residents', [ResidentController::class, 'showAllResidents']); //Route for showing all residents
-Route::put('/resident/{id}', [ResidentController::class, 'updateResident']); // Route for updating a resident by ID
+Route::post('/resident', [ResidentController::class, 'storeResident']);
+Route::post('/resident/login', [ResidentController::class, 'loginResident']);
+Route::get('/resident/{id}', [ResidentController::class, 'showResident']);
+Route::get('/residents', [ResidentController::class, 'showAllResidents']);
+Route::put('/resident/{id}', [ResidentController::class, 'updateResident']);
 
 // Waste Collectors routes.
-Route::post('/waste-collector', [WasteCollectorController::class, 'storeWasteCollector']); // Route for creating a waste collector
+Route::post('/waste-collector', [WasteCollectorController::class, 'storeWasteCollector']);
+Route::post('/waste-collector/login', [WasteCollectorController::class, 'loginWasteCollector']);
 Route::get('/waste-collector/{id}', [WasteCollectorController::class, 'showWasteCollector']);
 Route::get('/waste-collectors', [WasteCollectorController::class, 'showAllWasteCollector']);
 Route::put('/waste-collector/{id}', [WasteCollectorController::class, 'updateWasteCollector']);
@@ -62,3 +70,15 @@ Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice
 Route::get('/waste_invoice/{id}', [WasteInvoiceController::class, 'showWasteInvoice']);
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);
+
+//Feedback Routes.
+Route::post('/feedback', [FeedbackController::class, 'storeFeedback']);
+Route::get('/feedback/{id}', [FeedbackController::class, 'showFeedback']);
+Route::get('/feedbacks', [FeedbackController::class, 'showAllFeedback']);
+Route::put('/feedback/{id}', [FeedbackController::class, 'updateFeedback']);
+
+//Messaging Routes.
+Route::post('/message', [MessagingController::class, 'storeMessage']);
+Route::get('/message/{id}', [MessagingController::class, 'showMessage']);
+Route::get('/messages', [MessagingController::class, 'showAllMessage']);
+Route::put('/message/{id}', [MessagingController::class, 'updateMessage']);
