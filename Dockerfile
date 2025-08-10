@@ -1,39 +1,36 @@
-# Use the official PHP 8.2 image with Apache
-FROM php:8.2-apache
+# Use the official PHP image with required extensions
+FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
     git \
     unzip \
-    libzip-dev \
-    libpng-dev \
+    curl \
     libonig-dev \
     libxml2-dev \
-    zip \
-    curl \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Set working directory
-WORKDIR /var/www/html
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
 
 # Install Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Copy existing application files
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy project files
 COPY . .
 
-# Install Laravel dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies
+RUN composer install --no-interaction --optimize-autoloader --no-dev
 
 # Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose Apache port
-EXPOSE 80
+# Expose port 8000
+EXPOSE 8000
 
-# Start Apache server
-CMD ["apache2-foreground"]
+# Start Laravel server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
