@@ -22,6 +22,7 @@ class CollectionController extends Controller
             'invoices' => 'required|array|min:1',
             'invoices.*.type_id' => 'required|exists:types,id',
             'invoices.*.kg' => 'required|numeric|min:0.1',
+            'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
         ]);
 
@@ -47,6 +48,7 @@ class CollectionController extends Controller
                     'type_id' => $invoiceData['type_id'],
                     'kg' => $invoiceData['kg'],
                     'created_by' => $invoiceData['created_by'],
+                    'description' => $invoiceData['description'],
                     'status' => 'pending',
                     'amount' => $amount
                 ]);

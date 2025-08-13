@@ -68,7 +68,7 @@ Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']
 
 // Waste Invoice routes.
 Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice']);
-Route::get('/waste_invoice/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
+Route::get('/waste_invoice/{id}/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);
 

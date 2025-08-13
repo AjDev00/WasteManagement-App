@@ -44,20 +44,43 @@ class WasteInvoiceController extends Controller
     }
 
     //show waste invoice by collectionID.
-    public function showWasteInvoice($collectionId){
-        $waste_invoice = WasteInvoice::find($collectionId)->all();
+    public function showWasteInvoice($id, $collectionId){
+        $waste_invoice = WasteInvoice::find($id);
+        $collectionId = $waste_invoice->collection_id;
 
-        if(!$waste_invoice){
-            return response()->json([
-                'status' => false,
-                'message' => 'waste invoice not found'
-            ]);
+        if($collectionId){
+            $waste = WasteInvoice::where("collection_id", $collectionId)->get();
+            
+            if($waste){
+                return response()->json([
+                    'status' => true,
+                    'data' => $waste
+                ]);
+            } 
+            else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'waste invoice not found'
+                ]); 
+            }
         }
 
         return response()->json([
-            'status' => true,
-            'data' => $waste_invoice
+            'status' => false,
+            'message' => 'collection id not found'
         ]);
+
+        // if(!$waste_invoice){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'waste invoice not found'
+        //     ]);
+        // }
+
+        // return response()->json([
+        //     'status' => true,
+        //     'data' => $waste_invoice
+        // ]);
     }
 
     // Route for showing all waste invoices
