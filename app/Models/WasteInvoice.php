@@ -6,5 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class WasteInvoice extends Model
 {
-    //
+    protected $fillable = [
+        'collection_id',
+        'type_id',
+        'kg',
+        'amount',
+        'picture',
+        'count',
+        'description',
+        'status',
+        'created_by'
+    ];
 }

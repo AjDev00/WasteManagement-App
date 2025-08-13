@@ -61,13 +61,14 @@ Route::put('/supervisor/{id}', [SupervisorController::class, 'updateSupervisor']
 
 // Collection routes.
 Route::post('/collection', [CollectionController::class, 'storeCollection']);
+Route::post('/collections/{collection}/attach_picker', [CollectionController::class, 'attachPicker']);
 Route::get('/collection/{id}', [CollectionController::class, 'showCollection']);
 Route::get('/collections', [CollectionController::class, 'showAllCollection']);
 Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']);
 
 // Waste Invoice routes.
 Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice']);
-Route::get('/waste_invoice/{id}', [WasteInvoiceController::class, 'showWasteInvoice']);
+Route::get('/waste_invoice/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);
 

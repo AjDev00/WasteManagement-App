@@ -43,9 +43,9 @@ class WasteInvoiceController extends Controller
         ]);
     }
 
-    //show a single waste invoice by ID
-    public function showWasteInvoice($id){
-        $waste_invoice = WasteInvoice::find($id);
+    //show waste invoice by collectionID.
+    public function showWasteInvoice($collectionId){
+        $waste_invoice = WasteInvoice::find($collectionId)->all();
 
         if(!$waste_invoice){
             return response()->json([
