@@ -4,6 +4,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MessagingController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SupervisorController;
@@ -24,6 +25,9 @@ Route::get('/resi', function (Request $request) {
 
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
+
+//notifications route.
+Route::get('/notifications/{resident_id}', [NotificationController::class, 'showNotifications']);
 
 // Residents routes.
 Route::post('/resident', [ResidentController::class, 'storeResident']);

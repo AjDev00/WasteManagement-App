@@ -69,18 +69,6 @@ class WasteInvoiceController extends Controller
             'status' => false,
             'message' => 'collection id not found'
         ]);
-
-        // if(!$waste_invoice){
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'waste invoice not found'
-        //     ]);
-        // }
-
-        // return response()->json([
-        //     'status' => true,
-        //     'data' => $waste_invoice
-        // ]);
     }
 
     // Route for showing all waste invoices

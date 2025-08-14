@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\Notification;
 use App\Models\TempImage;
 use App\Models\Type;
 use App\Models\WasteInvoice;
@@ -26,10 +27,10 @@ class CollectionController extends Controller
             'invoices.*.kg' => 'required|numeric|min:0.1',
             'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
-            'invoices.*.image_id' => 'nullable|exists:temp_images,id'
+            'invoices.*.picture' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        return DB::transaction(function () use($collectionData) {
+        return DB::transaction(function () use($collectionData, $request) {
             //insert the collection data.
             $collection = Collection::create([
                 'resident_id' => $collectionData['resident_id'],
@@ -41,7 +42,7 @@ class CollectionController extends Controller
             $totalAmount = 0;
 
             //loop through each collectionData invoices as invoiceData - allows dropping of multiple invoices in the DB.
-            foreach($collectionData['invoices'] as $invoiceData){
+            foreach($collectionData['invoices'] as $index => $invoiceData){
                 $type = Type::find($invoiceData['type_id']); //find the type of waste with the invoice data type_id
                 $amount = $invoiceData['kg'] * $type->min_price_per_kg;
 
@@ -56,22 +57,12 @@ class CollectionController extends Controller
                     'amount' => $amount
                 ]);
 
-                //save image.
-                if (!empty($invoiceData['image_id'])) {
-                    $tempImage = TempImage::find($invoiceData['image_id']);
-                    
-                    if ($tempImage) {
-                        $ext = pathinfo($tempImage->name, PATHINFO_EXTENSION);
-                        $imageName = time() . '-' . $wasteInvoice->id . '.' . $ext;
+                if ($request->hasFile("invoices.$index.picture")) {
+                    $file = $request->file("invoices.$index.picture");
+                    $imageName = time() . '-' . $wasteInvoice->id . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/invoices'), $imageName);
 
-                        // update the existing invoice with the picture name
-                        $wasteInvoice->update(['picture' => $imageName]);
-
-                        $sourcePath = public_path('uploads/temp/'.$tempImage->name);
-                        $destinationPath = public_path('uploads/invoices/'.$imageName);
-
-                        File::copy($sourcePath, $destinationPath); // move instead of copy
-                    }
+                    $wasteInvoice->update(['picture' => $imageName]);
                 }
                 
                 $totalAmount += $amount;
@@ -90,27 +81,52 @@ class CollectionController extends Controller
     }
 
     //update waste_collector_id in the collections table.
-    public function attachPicker(Request $request, Collection $collection){
+    public function attachPicker(Request $request, Collection $collection)
+    {
         $request->validate([
             'waste_collector_id' => 'required|exists:waste_collectors,id',
-            'pickup_on' => 'required|date',
-            'delivered_on' => 'required|date'
+            'pickup_on'          => 'required|date',
+            'delivered_on'       => 'required|date'
         ]);
 
-        $collection->update([
-            'waste_collector_id' => $request->waste_collector_id,
-            'pickup_on' => $request->pickup_on,
-            'delivered_on' => $request->delivered_on,
-            'status' => 'picker assigned'
-        ]);
+        DB::transaction(function () use ($request, $collection) {
+            //update the collection
+            $collection->update([
+                'waste_collector_id' => $request->waste_collector_id,
+                'pickup_on'          => $request->pickup_on,
+                'delivered_on'       => $request->delivered_on,
+                'status'             => 'picker assigned'
+            ]);
+
+            //refresh to make sure it has the updated waste_collector_id
+            $collection->refresh();
+
+            //household notification
+            Notification::create([
+                'resident_id'        => $collection->resident_id,
+                'waste_collector_id' => null,
+                'title'              => 'Picker Assigned',
+                'message'            => "You assigned a picker. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'message_type'       => 'picker_assigned',
+            ]);
+
+            //picker notification
+            Notification::create([
+                'resident_id'        => null,
+                'waste_collector_id' => $collection->waste_collector_id,
+                'title'              => 'New Waste Collection Assigned',
+                'message'            => "A new collection has been assigned to you. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'message_type'       => 'picker_assigned',
+            ]);
+        });
 
         return response()->json([
-            'status' => true,
-            'message' => 'Picker assigned successfully',
-            'data' => $collection->fresh()
+            'status'    => true,
+            'message'   => 'Picker assigned successfully',
+            'notification' => 'You have a new notification',
+            'data'      => $collection->fresh()
         ]);
     }
-
 
     // Route for updating a collection by ID
     public function updateCollection(Request $request, $id){
