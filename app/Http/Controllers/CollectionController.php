@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\TempImage;
 use App\Models\Type;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -24,6 +26,7 @@ class CollectionController extends Controller
             'invoices.*.kg' => 'required|numeric|min:0.1',
             'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
+            'invoices.*.image_id' => 'nullable|exists:temp_images,id'
         ]);
 
         return DB::transaction(function () use($collectionData) {
@@ -52,6 +55,24 @@ class CollectionController extends Controller
                     'status' => 'pending',
                     'amount' => $amount
                 ]);
+
+                //save image.
+                if (!empty($invoiceData['image_id'])) {
+                    $tempImage = TempImage::find($invoiceData['image_id']);
+                    
+                    if ($tempImage) {
+                        $ext = pathinfo($tempImage->name, PATHINFO_EXTENSION);
+                        $imageName = time() . '-' . $wasteInvoice->id . '.' . $ext;
+
+                        // update the existing invoice with the picture name
+                        $wasteInvoice->update(['picture' => $imageName]);
+
+                        $sourcePath = public_path('uploads/temp/'.$tempImage->name);
+                        $destinationPath = public_path('uploads/invoices/'.$imageName);
+
+                        File::copy($sourcePath, $destinationPath); // move instead of copy
+                    }
+                }
                 
                 $totalAmount += $amount;
             }
@@ -71,11 +92,15 @@ class CollectionController extends Controller
     //update waste_collector_id in the collections table.
     public function attachPicker(Request $request, Collection $collection){
         $request->validate([
-            'waste_collector_id' => 'required|exists:waste_collectors,id'
+            'waste_collector_id' => 'required|exists:waste_collectors,id',
+            'pickup_on' => 'required|date',
+            'delivered_on' => 'required|date'
         ]);
 
         $collection->update([
             'waste_collector_id' => $request->waste_collector_id,
+            'pickup_on' => $request->pickup_on,
+            'delivered_on' => $request->delivered_on,
             'status' => 'picker assigned'
         ]);
 
