@@ -12,9 +12,9 @@ class LocationController extends Controller
     public function storeLocation(Request $request){
         $validator = Validator::make($request->all(), [
             'title' => 'required',
-            'city' => 'required',
-            'state' => 'required',
             'country' => 'required',   
+            'state' => 'required',
+            'city' => 'required',
         ]);
 
         //error handling
@@ -29,9 +29,9 @@ class LocationController extends Controller
         // Create the location
         $location = new Location();
         $location->title = $request->title;
-        $location->city = $request->city;
-        $location->state = $request->state;
         $location->country = $request->country;
+        $location->state = $request->state;
+        $location->city = $request->city;
         $location->save();
 
         return response()->json([

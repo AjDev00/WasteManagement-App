@@ -28,6 +28,7 @@ Route::post('/save-temp-image', [TempImageController::class, 'store']);
 
 //notifications route.
 Route::get('/notifications/{resident_id}', [NotificationController::class, 'showNotifications']);
+Route::delete('/deleteNot/{id}', [NotificationController::class, 'deleteNotification']);
 
 // Residents routes.
 Route::post('/resident', [ResidentController::class, 'storeResident']);

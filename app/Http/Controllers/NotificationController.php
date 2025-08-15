@@ -23,4 +23,23 @@ class NotificationController extends Controller
             'message' => "No notifications",
         ]);
     }
+
+    public function deleteNotification($id){
+        $notification = Notification::find($id);
+
+        if(!$notification){
+            return response()->json([
+                'status' => false,
+                'message' => 'Notification not found!'
+            ]);
+        }
+
+        $notification->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Notification deleted!'
+        ]);
+
+    }
 }
