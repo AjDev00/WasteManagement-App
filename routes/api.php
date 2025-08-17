@@ -29,6 +29,7 @@ Route::post('/save-temp-image', [TempImageController::class, 'store']);
 //notifications route.
 Route::get('/notifications/{resident_id}', [NotificationController::class, 'showNotifications']);
 Route::delete('/deleteNot/{id}', [NotificationController::class, 'deleteNotification']);
+Route::put('/notification/{id}/read', [NotificationController::class, 'isRead']);
 
 // Residents routes.
 Route::post('/resident', [ResidentController::class, 'storeResident']);
@@ -77,6 +78,7 @@ Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']
 
 // Waste Invoice routes.
 Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice']);
+Route::get('/waste_invoice/{resident_id}', [WasteInvoiceController::class, 'showResidentWasteInvoices']);
 Route::get('/waste_invoice/{id}/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);

@@ -18,4 +18,9 @@ class Collection extends Model
         'summary',
         'status'
     ];
+
+    public function wasteInvoices()
+    {
+        return $this->hasMany(WasteInvoice::class);
+    }
 }

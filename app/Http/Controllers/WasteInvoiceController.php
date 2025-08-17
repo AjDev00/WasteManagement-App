@@ -131,4 +131,21 @@ class WasteInvoiceController extends Controller
             'data' => $waste_invoice
         ]);
     }
+
+    //display each resident's waste invoices
+    public function showResidentWasteInvoices($residentId){
+        $waste_invoices = WasteInvoice::where('created_by', $residentId)->with('collection')->orderBy('created_at', 'desc')->get();
+
+        if($waste_invoices->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'No waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $waste_invoices
+        ]);
+    }
 }

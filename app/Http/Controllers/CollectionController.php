@@ -21,13 +21,14 @@ class CollectionController extends Controller
         $collectionData = $request->validate([
             'resident_id' => 'required|exists:residents,id',
             'location_id' => 'required|exists:locations,id',
+            'pickup_on' => 'required|date',
             'accepted_by' => 'required|exists:residents,id',
             'invoices' => 'required|array|min:1',
             'invoices.*.type_id' => 'required|exists:types,id',
             'invoices.*.kg' => 'required|numeric|min:0.1',
             'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
-            'invoices.*.picture' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048'
+            // 'invoices.*.picture' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         return DB::transaction(function () use($collectionData, $request) {
@@ -36,6 +37,7 @@ class CollectionController extends Controller
                 'resident_id' => $collectionData['resident_id'],
                 'location_id' => $collectionData['location_id'],
                 'accepted_by' => $collectionData['accepted_by'],
+                'pickup_on' => $collectionData['pickup_on'],
                 'amount_total' => 0
             ]);
 
@@ -57,12 +59,29 @@ class CollectionController extends Controller
                     'amount' => $amount
                 ]);
 
-                if ($request->hasFile("invoices.$index.picture")) {
-                    $file = $request->file("invoices.$index.picture");
-                    $imageName = time() . '-' . $wasteInvoice->id . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/invoices'), $imageName);
+                // if ($request->hasFile("invoices.$index.picture")) {
+                //     $file = $request->file("invoices.$index.picture");
+                //     $imageName = time() . '-' . $wasteInvoice->id . '.' . $file->getClientOriginalExtension();
+                //     $file->move(public_path('uploads/invoices'), $imageName);
 
-                    $wasteInvoice->update(['picture' => $imageName]);
+                //     $wasteInvoice->update(['picture' => $imageName]);
+                // }
+                //save image.
+                $tempImage = TempImage::find($request->image_id);
+
+                if($tempImage != null){
+                    $imageExtArray = explode('.', $tempImage->name); //seperates the image name and it's extension.
+                    $ext = last($imageExtArray); //save the extension in a variable.
+                    $imageName = time().'-'.$wasteInvoice->id.'.'.$ext; //create a unique name for the image with the time function followed by the blog id and the previously saved extension.
+
+                    $wasteInvoice->picture = $imageName;
+                    $wasteInvoice->save();
+
+                    //move image from a temporary directory to a permanent directory with the new image name.
+                    $sourcePath = public_path('uploads/temp/'.$tempImage->name);
+                    $destinationPath = public_path('uploads/invoices/'.$imageName);
+
+                    File::copy($sourcePath, $destinationPath); //copies the image from the source path to the destination path.
                 }
                 
                 $totalAmount += $amount;
@@ -70,6 +89,15 @@ class CollectionController extends Controller
 
             //update the amount total column in the collection table.
             $collection->update(['amount_total' => $totalAmount]);
+
+            //household notification
+            Notification::create([
+                'resident_id'        => $collection->resident_id,
+                'waste_collector_id' => null,
+                'title'              => 'Waste Added',
+                'message'            => "You added waste. Your request has been received and is pending assignment to a picker. Thank you for helping keep your community clean!",
+                'message_type'       => 'waste_added',
+            ]);
 
             return response()->json([
                 'status' => true,

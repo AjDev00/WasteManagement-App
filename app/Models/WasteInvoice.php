@@ -17,4 +17,9 @@ class WasteInvoice extends Model
         'status',
         'created_by'
     ];
+
+    public function collection()
+    {
+        return $this->belongsTo(Collection::class);
+    }
 }
