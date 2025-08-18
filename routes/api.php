@@ -12,6 +12,7 @@ use App\Http\Controllers\TempImageController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\WasteCollectorController;
 use App\Http\Controllers\WasteInvoiceController;
+use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +60,7 @@ Route::get('/payments', [PaymentController::class, 'showAllPayment']);
 
 // Location routes.
 Route::post('/location', [LocationController::class, 'storeLocation']);
+Route::get('/location/check/{resident_id}', [LocationController::class, 'checkIfUserLocationExists']);
 Route::get('/location/{id}', [LocationController::class, 'showLocation']);
 Route::get('/locations', [LocationController::class, 'showAllLocation']);
 Route::put('/location/{id}', [LocationController::class, 'updateLocation']);
@@ -80,6 +82,13 @@ Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']
 Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice']);
 Route::get('/waste_invoice/{resident_id}', [WasteInvoiceController::class, 'showResidentWasteInvoices']);
 Route::get('/waste_invoice/{id}/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
+Route::get('/filter_by_type/{type_id}', [WasteInvoiceController::class, 'filterWasteInvoiceByType']);
+Route::get('/total_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfWasteInvoices']);
+Route::get('/total_plastic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfPlasticWasteInvoices']);
+Route::get('/total_ewaste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfEWasteInvoices']);
+Route::get('/total_organic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfOrganicWasteInvoices']);
+Route::get('/total_cans_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfCansWasteInvoices']);
+
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);
 

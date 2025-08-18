@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Type;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -134,7 +135,10 @@ class WasteInvoiceController extends Controller
 
     //display each resident's waste invoices
     public function showResidentWasteInvoices($residentId){
-        $waste_invoices = WasteInvoice::where('created_by', $residentId)->with('collection')->orderBy('created_at', 'desc')->get();
+        $waste_invoices = WasteInvoice::where('created_by', $residentId)
+                        ->with('collection')
+                        ->orderBy('created_at', 'desc')
+                        ->get();
 
         if($waste_invoices->isEmpty()){
             return response()->json([
@@ -146,6 +150,121 @@ class WasteInvoiceController extends Controller
         return response()->json([
             'status' => true,
             'data' => $waste_invoices
+        ]);
+    }
+
+    public function filterWasteInvoiceByType($type){
+        $waste_type = Type::where('title', $type)->first();
+        $type_id = $waste_type->id;
+        $ty = WasteInvoice::where('type_id', $type_id)->get();
+
+        return response()->json([
+            'data' => $ty
+        ]);
+
+    }
+    
+    public function filterByStatus($status){
+        $waste = WasteInvoice::where('status', $status)->get();
+
+        if($waste->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'Invoice not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $waste
+        ]);
+    }
+
+    public function getTotalAmountOfWasteInvoices($resident_id){
+        $total = WasteInvoice::where('created_by', $resident_id)->count();
+
+        if($total === 0){
+            return response()->json([
+                'status' => false,
+                'message' => 'No waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $total
+        ]);
+    }
+
+    public function getTotalAmountOfPlasticWasteInvoices($resident_id){
+        $total = WasteInvoice::where('created_by', $resident_id)
+                    ->where('type_id', Type::where('title', 'Plastic')->first()->id)
+                    ->count();
+
+        if($total === 0){
+            return response()->json([
+                'status' => false,
+                'message' => 'No plastic waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $total
+        ]);
+    }
+
+    public function getTotalAmountOfOrganicWasteInvoices($resident_id){
+        $total = WasteInvoice::where('created_by', $resident_id)
+                    ->where('type_id', Type::where('title', 'Organic')->first()->id)
+                    ->count();
+
+        if($total === 0){
+            return response()->json([
+                'status' => false,
+                'message' => 'No organic waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $total
+        ]);
+    }
+
+    public function getTotalAmountOfCansWasteInvoices($resident_id){
+        $total = WasteInvoice::where('created_by', $resident_id)
+                    ->where('type_id', Type::where('title', 'Cans')->first()->id)
+                    ->count();
+
+        if($total === 0){
+            return response()->json([
+                'status' => false,
+                'message' => 'No cans waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $total
+        ]);
+    }
+
+    public function getTotalAmountOfEWasteInvoices($resident_id){
+        $total = WasteInvoice::where('created_by', $resident_id)
+                    ->where('type_id', Type::where('title', 'E-Waste')->first()->id)
+                    ->count();
+
+        if($total === 0){
+            return response()->json([
+                'status' => false,
+                'message' => 'No e-waste invoices found for this resident'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $total
         ]);
     }
 }

@@ -12,6 +12,8 @@ class LocationController extends Controller
     public function storeLocation(Request $request){
         $validator = Validator::make($request->all(), [
             'title' => 'required',
+            'resident_id' => 'nullable|exists:residents,id',
+            'waste_collector_id' => 'nullable|exists:waste_collectors,id',
             'country' => 'required',   
             'state' => 'required',
             'city' => 'required',
@@ -29,6 +31,8 @@ class LocationController extends Controller
         // Create the location
         $location = new Location();
         $location->title = $request->title;
+        $location->resident_id = $request->resident_id;
+        $location->waste_collector_id = $request->waste_collector_id;
         $location->country = $request->country;
         $location->state = $request->state;
         $location->city = $request->city;
@@ -38,6 +42,22 @@ class LocationController extends Controller
             'status' => true,
             'message' => 'location created successfully',
             'data' => $location
+        ]);
+    }
+
+    public function checkIfUserLocationExists($resident_id){
+        $location = Location::where('resident_id', $resident_id)->first();
+
+        if($location){
+            return response()->json([
+                'status' => true,
+                'data' => $location
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Location not found'
         ]);
     }
 
