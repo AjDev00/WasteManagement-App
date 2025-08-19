@@ -7,6 +7,7 @@ use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ResidentController;
+use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\TempImageController;
 use App\Http\Controllers\TypeController;
@@ -23,6 +24,8 @@ Route::get('/user', function (Request $request) {
 Route::get('/resi', function (Request $request) {
     return $request->resident();
 })->middleware('auth:resident');
+
+Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);

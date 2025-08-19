@@ -25,7 +25,7 @@ class CollectionController extends Controller
             'accepted_by' => 'required|exists:residents,id',
             'invoices' => 'required|array|min:1',
             'invoices.*.type_id' => 'required|exists:types,id',
-            'invoices.*.kg' => 'required|numeric|min:0.1',
+            'invoices.*.kg' => 'required|numeric|min:1',
             'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
             // 'invoices.*.picture' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048'
