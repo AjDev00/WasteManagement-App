@@ -23,4 +23,8 @@ class WasteCollector extends Model
         'bank_name',
         'bank_account_number',
     ];
+
+    protected $hidden = [
+        'password',
+    ];
 }

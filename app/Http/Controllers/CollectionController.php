@@ -6,10 +6,12 @@ use App\Models\Collection;
 use App\Models\Notification;
 use App\Models\TempImage;
 use App\Models\Type;
+use Carbon\Carbon;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -58,31 +60,50 @@ class CollectionController extends Controller
                     'status' => 'pending',
                     'amount' => $amount
                 ]);
-
-                // if ($request->hasFile("invoices.$index.picture")) {
-                //     $file = $request->file("invoices.$index.picture");
-                //     $imageName = time() . '-' . $wasteInvoice->id . '.' . $file->getClientOriginalExtension();
-                //     $file->move(public_path('uploads/invoices'), $imageName);
-
-                //     $wasteInvoice->update(['picture' => $imageName]);
-                // }
+                
                 //save image.
-                $tempImage = TempImage::find($request->image_id);
+                $imageId = $invoiceData['image_id'] ?? null;
 
-                if($tempImage != null){
-                    $imageExtArray = explode('.', $tempImage->name); //seperates the image name and it's extension.
-                    $ext = last($imageExtArray); //save the extension in a variable.
-                    $imageName = time().'-'.$wasteInvoice->id.'.'.$ext; //create a unique name for the image with the time function followed by the blog id and the previously saved extension.
+                if (!empty($imageId)) {
+                    $tempImage = TempImage::find($imageId);
 
-                    $wasteInvoice->picture = $imageName;
-                    $wasteInvoice->save();
+                    if ($tempImage) {
+                        // determine extension safely
+                        $ext = pathinfo($tempImage->name, PATHINFO_EXTENSION);
+                        $imageName = time() . '-' . $wasteInvoice->id . '.' . $ext;
 
-                    //move image from a temporary directory to a permanent directory with the new image name.
-                    $sourcePath = public_path('uploads/temp/'.$tempImage->name);
-                    $destinationPath = public_path('uploads/invoices/'.$imageName);
+                        // ensure destination directory exists
+                        $destDir = public_path('uploads/invoices');
+                        if (!File::exists($destDir)) {
+                            File::makeDirectory($destDir, 0755, true);
+                        }
 
-                    File::copy($sourcePath, $destinationPath); //copies the image from the source path to the destination path.
-                }
+                        $sourcePath = public_path('uploads/temp/' . $tempImage->name);
+                        $destinationPath = $destDir . '/' . $imageName;
+
+                        // only proceed if source file exists
+                        if (File::exists($sourcePath)) {
+                            // move the file from temp to permanent (use move to avoid stale files)
+                            try {
+                                File::move($sourcePath, $destinationPath);
+                            } catch (\Exception $e) {
+                                // fallback to copy then unlink
+                                File::copy($sourcePath, $destinationPath);
+                                File::delete($sourcePath);
+                            }
+
+                            // update invoice record with picture name
+                            $wasteInvoice->picture = $imageName;
+                            $wasteInvoice->save();
+
+                            // optional: delete the TempImage DB record if you don't need it
+                            // $tempImage->delete();
+                        } else {
+                            // log or handle missing source file
+                            Log::warning("Temp image file not found: " . $sourcePath . " for tempImage id: " . $imageId);
+                        }
+                    }
+                }  
                 
                 $totalAmount += $amount;
             }
@@ -106,6 +127,23 @@ class CollectionController extends Controller
                 'waste_invoice' => $wasteInvoice
             ]);
         });
+    }
+
+    //view a single collection with id.
+    public function viewCollection($id){
+        $collection = Collection::with('wasteInvoices')->find($id);
+
+        if(!$collection){
+            return response()->json([
+                'status' => false,
+                'message' => 'Collection not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $collection
+        ]);
     }
 
     //update waste_collector_id in the collections table.
@@ -134,16 +172,20 @@ class CollectionController extends Controller
                 'resident_id'        => $collection->resident_id,
                 'waste_collector_id' => null,
                 'title'              => 'Picker Assigned',
-                'message'            => "You assigned a picker. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'message'            => "You waste pickup order has been verified and a picker has been assigned to come pick up your waste. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
                 'message_type'       => 'picker_assigned',
             ]);
+
+            //update status of waste from pending to verified.
+            WasteInvoice::where('collection_id', $collection->id)
+            ->update(['status' => 'verified']);
 
             //picker notification
             Notification::create([
                 'resident_id'        => null,
                 'waste_collector_id' => $collection->waste_collector_id,
                 'title'              => 'New Waste Collection Assigned',
-                'message'            => "A new collection has been assigned to you. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'message'            => "A new waste collection has been assigned to you. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
                 'message_type'       => 'picker_assigned',
             ]);
         });
@@ -153,6 +195,35 @@ class CollectionController extends Controller
             'message'   => 'Picker assigned successfully',
             'notification' => 'You have a new notification',
             'data'      => $collection->fresh()
+        ]);
+    }
+
+    //get waste within a particular waste invoice.
+    public function newRequests()
+    {
+        $from = Carbon::now()->subHours(5); //5 hours ago
+        $to   = Carbon::now()->subSecond(); //1 second ago
+
+        $collections = Collection::with(['wasteInvoices' => function ($query) use ($from, $to) {
+            $query->whereBetween('created_at', [$from, $to]);
+        }])
+        ->where('status', 'awaiting picker') //only collections still awaiting picker
+        ->whereHas('wasteInvoices', function ($query) use ($from, $to) {
+            $query->whereBetween('created_at', [$from, $to]);
+        })
+        ->get();
+
+        if($collections->isEmpty()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'No new requests found',
+            ]);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'New requests fetched successfully',
+            'data'    => $collections
         ]);
     }
 

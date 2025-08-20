@@ -21,9 +21,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+//get authenticated users.
 Route::get('/resi', function (Request $request) {
     return $request->resident();
 })->middleware('auth:resident');
+
+Route::get('/picker', function (Request $request) {
+    return $request->wasteCollector();
+})->middleware('auth:waste_collector');
 
 Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
@@ -45,6 +50,7 @@ Route::put('/resident/{id}', [ResidentController::class, 'updateResident']);
 // Waste Collectors routes.
 Route::post('/waste-collector', [WasteCollectorController::class, 'storeWasteCollector']);
 Route::post('/waste-collector/login', [WasteCollectorController::class, 'loginWasteCollector']);
+Route::get('/all-collection', [WasteCollectorController::class, 'showAllCollection']); //view all collection available(relation with waste invoices)
 Route::get('/waste-collector/{id}', [WasteCollectorController::class, 'showWasteCollector']);
 Route::get('/waste-collectors', [WasteCollectorController::class, 'showAllWasteCollector']);
 Route::put('/waste-collector/{id}', [WasteCollectorController::class, 'updateWasteCollector']);
@@ -77,6 +83,8 @@ Route::put('/supervisor/{id}', [SupervisorController::class, 'updateSupervisor']
 // Collection routes.
 Route::post('/collection', [CollectionController::class, 'storeCollection']);
 Route::post('/collections/{collection}/attach_picker', [CollectionController::class, 'attachPicker']);
+Route::get('/view-collection/{id}', [CollectionController::class, 'viewCollection']); //view a single collection(relation with waste invoices)
+Route::get('/new-requests', [CollectionController::class, 'newRequests']);
 Route::get('/collection/{id}', [CollectionController::class, 'showCollection']);
 Route::get('/collections', [CollectionController::class, 'showAllCollection']);
 Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']);
@@ -86,11 +94,12 @@ Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice
 Route::get('/waste_invoice/{resident_id}', [WasteInvoiceController::class, 'showResidentWasteInvoices']);
 Route::get('/waste_invoice/{id}/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
 Route::get('/filter_by_type/{type_id}', [WasteInvoiceController::class, 'filterWasteInvoiceByType']);
-Route::get('/total_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfWasteInvoices']);
-Route::get('/total_plastic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfPlasticWasteInvoices']);
-Route::get('/total_ewaste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfEWasteInvoices']);
-Route::get('/total_organic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfOrganicWasteInvoices']);
-Route::get('/total_cans_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfCansWasteInvoices']);
+Route::get('/first_five_waste_invoices/{resident_id}', [WasteInvoiceController::class, 'showFirstFiveWasteInvoices']);
+// Route::get('/total_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfWasteInvoices']);
+// Route::get('/total_plastic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfPlasticWasteInvoices']);
+// Route::get('/total_ewaste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfEWasteInvoices']);
+// Route::get('/total_organic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfOrganicWasteInvoices']);
+// Route::get('/total_cans_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfCansWasteInvoices']);
 
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);

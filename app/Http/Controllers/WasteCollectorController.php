@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Collection;
 use App\Models\WasteCollector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -37,6 +38,7 @@ class WasteCollectorController extends Controller
         ]);
     }
 
+    //login a waste collector.
     public function loginWasteCollector(Request $request){
         $request->validate([
             'email' => 'required|email',
@@ -62,6 +64,23 @@ class WasteCollectorController extends Controller
         ]);
     }
 
+    //view all wastecollection available.
+    public function showAllCollection(){
+        $collection = Collection::with('wasteInvoices')->latest()->get();
+
+        if($collection->isNotEmpty()){
+            return response()->json([
+                'status' => true,
+                'data' => $collection
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'No waste collection found!'
+        ]);
+    }
+
     // Show a single waste collector with the ID.
     public function showWasteCollector($id){
         $wasteCollector = WasteCollector::find($id);
@@ -78,7 +97,6 @@ class WasteCollectorController extends Controller
             'data' => $wasteCollector
         ]);
     }
-
 
     // Show all waste collectors.
     public function showAllWasteCollector(){

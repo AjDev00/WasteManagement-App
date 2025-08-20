@@ -45,6 +45,11 @@ return [
             'driver' => 'sanctum',
             'provider' => 'residents',
         ],
+
+        'waste_collector' => [
+            'driver' => 'sanctum',
+            'provider' => 'waste_collectors',
+        ]
     ],
 
     /*
@@ -73,6 +78,11 @@ return [
         'residents' => [
             'driver' => 'eloquent',
             'model' => App\Models\Resident::class,
+        ],
+
+        'waste_collectors' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\WasteCollector::class,
         ],
 
         // 'users' => [
