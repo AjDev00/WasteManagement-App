@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Validator;
 
 class TempImageController extends Controller
 {
-   public function store(Request $request)
-   {
+    public function store(Request $request){
         //validate the image field, make it required.
         $validate = Validator::make($request->all(), [
             'picture' => 'required|image'
@@ -18,14 +17,14 @@ class TempImageController extends Controller
         //check if validation fails.
         if($validate->fails()){
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Please upload an image',
-                'error' => $validate->errors()
+                'error'   => $validate->errors()
             ]);
         }
 
         //getting image extension and creating a dynamic name for every image.
-        $image = $request->image;
+        $image = $request->file('picture');
         $ext = $image->getClientOriginalExtension();
         $imageName = time().'.'.$ext;
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\SupervisorController;
@@ -32,6 +33,10 @@ Route::get('/picker', function (Request $request) {
 
 Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
+Route::get('/completed-stats', [ReportController::class, 'completedStats']);
+Route::get('/completed-daily-this-week', [ReportController::class, 'dailyCompletedThisWeek']);
+Route::get('/completed-between', [ReportController::class, 'completedBetween']);
+
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
 
@@ -39,6 +44,8 @@ Route::post('/save-temp-image', [TempImageController::class, 'store']);
 Route::get('/notifications/{resident_id}', [NotificationController::class, 'showNotifications']);
 Route::delete('/deleteNot/{id}', [NotificationController::class, 'deleteNotification']);
 Route::put('/notification/{id}/read', [NotificationController::class, 'isRead']);
+Route::get('/waste-collector-notifications/{waste_collector_id}', [NotificationController::class, 'showWasteCollectorNotifications']);
+Route::delete('/waste-collector-notifications/{id}', [NotificationController::class, 'deleteWasteCollectorNotification']);
 
 // Residents routes.
 Route::post('/resident', [ResidentController::class, 'storeResident']);
@@ -85,16 +92,22 @@ Route::post('/collection', [CollectionController::class, 'storeCollection']);
 Route::post('/collections/{collection}/attach_picker', [CollectionController::class, 'attachPicker']);
 Route::get('/view-collection/{id}', [CollectionController::class, 'viewCollection']); //view a single collection(relation with waste invoices)
 Route::get('/new-requests', [CollectionController::class, 'newRequests']);
-Route::get('/collection/{id}', [CollectionController::class, 'showCollection']);
-Route::get('/collections', [CollectionController::class, 'showAllCollection']);
+Route::get('/all-collections', [CollectionController::class, 'viewAllCollections']);
+Route::get('/filtervia-location/{locationName}', [CollectionController::class, 'filterCollectionViaLocation']);
+Route::get('/ongoing/{waste_collector_id}', [CollectionController::class, 'onGoing']);
+Route::put('/collection/{id}/cancel', [CollectionController::class, 'cancelAssignment']);
 Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']);
 
 // Waste Invoice routes.
 Route::post('/waste_invoice', [WasteInvoiceController::class, 'storeWasteInvoice']);
 Route::get('/waste_invoice/{resident_id}', [WasteInvoiceController::class, 'showResidentWasteInvoices']);
 Route::get('/waste_invoice/{id}/{collection_id}', [WasteInvoiceController::class, 'showWasteInvoice']);
-Route::get('/filter_by_type/{type_id}', [WasteInvoiceController::class, 'filterWasteInvoiceByType']);
+Route::get('/filter_by_type/{type_id}/{resident_id}', [WasteInvoiceController::class, 'filterWasteInvoiceByType']);
 Route::get('/first_five_waste_invoices/{resident_id}', [WasteInvoiceController::class, 'showFirstFiveWasteInvoices']);
+Route::get('/filter_by_pending/{id}', [WasteInvoiceController::class, 'filterByPendingStatus']);
+Route::get('/filter_by_verified/{id}', [WasteInvoiceController::class, 'filterByVerifiedStatus']);
+Route::get('/filter_by_delivered/{id}', [WasteInvoiceController::class, 'filterByDeliveredStatus']);
+Route::get('/filter_by_paid/{id}', [WasteInvoiceController::class, 'filterByPaidStatus']);
 // Route::get('/total_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfWasteInvoices']);
 // Route::get('/total_plastic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfPlasticWasteInvoices']);
 // Route::get('/total_ewaste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfEWasteInvoices']);

@@ -14,4 +14,12 @@ class Notification extends Model
         'message_type',
         'is_read'
     ];
+
+    public function resident() {
+        return $this->belongsTo(Resident::class, 'resident_id');
+    }
+
+    public function picker() {
+        return $this->belongsTo(WasteCollector::class, 'waste_collector_id');
+    }
 }

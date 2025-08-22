@@ -174,10 +174,13 @@ class WasteInvoiceController extends Controller
         ]);
     }
 
-    public function filterWasteInvoiceByType($type){
+    public function filterWasteInvoiceByType($type, $resident_id){
         $waste_type = Type::where('title', $type)->first();
         $type_id = $waste_type->id;
-        $ty = WasteInvoice::where('type_id', $type_id)->get();
+        $ty = WasteInvoice::where('type_id', $type_id)
+            ->where('created_by', $resident_id)
+            ->with('collection')
+            ->get();
 
         return response()->json([
             'data' => $ty
@@ -185,8 +188,72 @@ class WasteInvoiceController extends Controller
 
     }
     
-    public function filterByStatus($status){
-        $waste = WasteInvoice::where('status', $status)->get();
+    public function filterByPendingStatus($id){
+        $waste = WasteInvoice::where('status', 'pending')
+                ->where('created_by', $id)
+                ->with('collection')
+                ->latest()
+                ->get();
+
+        if($waste->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'Invoice not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $waste
+        ]);
+    }
+
+    public function filterByVerifiedStatus($id){
+        $waste = WasteInvoice::where('status', 'verified')
+                ->where('created_by', $id)
+                ->with('collection')
+                ->latest()
+                ->get();
+
+        if($waste->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'Invoice not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $waste
+        ]);
+    }
+
+    public function filterByDeliveredStatus($id){
+        $waste = WasteInvoice::where('status', 'delivered')
+                ->where('created_by', $id)
+                ->with('collection')
+                ->latest()
+                ->get();
+
+        if($waste->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'Invoice not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $waste
+        ]);
+    }
+
+    public function filterByPaidStatus($id){
+        $waste = WasteInvoice::where('status', 'paid')
+                ->where('created_by', $id)
+                ->with('collection')
+                ->latest()
+                ->get();
 
         if($waste->isEmpty()){
             return response()->json([

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\Location;
 use App\Models\Notification;
+use App\Models\Resident;
 use App\Models\TempImage;
 use App\Models\Type;
+use App\Models\WasteCollector;
 use Carbon\Carbon;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
@@ -30,7 +33,7 @@ class CollectionController extends Controller
             'invoices.*.kg' => 'required|numeric|min:1',
             'invoices.*.description' => 'nullable|string',
             'invoices.*.created_by' => 'required|exists:residents,id',
-            // 'invoices.*.picture' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048'
+            'invoices.*.picture' => 'nullable|string'
         ]);
 
         return DB::transaction(function () use($collectionData, $request) {
@@ -50,13 +53,13 @@ class CollectionController extends Controller
                 $type = Type::find($invoiceData['type_id']); //find the type of waste with the invoice data type_id
                 $amount = $invoiceData['kg'] * $type->min_price_per_kg;
 
-
                 $wasteInvoice = WasteInvoice::create([
                     'collection_id' => $collection->id,
                     'type_id' => $invoiceData['type_id'],
                     'kg' => $invoiceData['kg'],
                     'created_by' => $invoiceData['created_by'],
                     'description' => $invoiceData['description'],
+                    'picture'  => $invoiceData['picture'],
                     'status' => 'pending',
                     'amount' => $amount
                 ]);
@@ -131,7 +134,7 @@ class CollectionController extends Controller
 
     //view a single collection with id.
     public function viewCollection($id){
-        $collection = Collection::with('wasteInvoices')->find($id);
+        $collection = Collection::with(['wasteInvoices', 'location'])->find($id);
 
         if(!$collection){
             return response()->json([
@@ -146,13 +149,58 @@ class CollectionController extends Controller
         ]);
     }
 
+    public function filterCollectionViaLocation($locationName)
+    {
+        // Get all matching locations
+        $locations = Location::where('city', $locationName)->pluck('id');
+
+        // Fetch collections linked to any of those locations
+        $collection = Collection::whereIn('location_id', $locations)
+            ->with(['wasteInvoices', 'location'])
+            ->where('status', 'awaiting picker')
+            ->latest()
+            ->get();
+
+        if ($collection->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No collection with this location'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $collection
+        ]);
+    }
+
+    //view a all collection.
+    public function viewAllCollections(){
+        $collections = Collection::with(['wasteInvoices', 'location'])
+                        ->where('status', 'awaiting picker')
+                        ->latest()
+                        ->get();
+
+        if($collections->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'No collections found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $collections
+        ]);
+    }
+
     //update waste_collector_id in the collections table.
     public function attachPicker(Request $request, Collection $collection)
     {
         $request->validate([
             'waste_collector_id' => 'required|exists:waste_collectors,id',
             'pickup_on'          => 'required|date',
-            'delivered_on'       => 'required|date'
+            'pickup_on_time'     => 'required'
         ]);
 
         DB::transaction(function () use ($request, $collection) {
@@ -160,32 +208,49 @@ class CollectionController extends Controller
             $collection->update([
                 'waste_collector_id' => $request->waste_collector_id,
                 'pickup_on'          => $request->pickup_on,
-                'delivered_on'       => $request->delivered_on,
+                'pickup_on_time'     => $request->pickup_on_time,
                 'status'             => 'picker assigned'
             ]);
 
             //refresh to make sure it has the updated waste_collector_id
             $collection->refresh();
 
+            $pickerId = $collection->waste_collector_id;
+            $pickerName = WasteCollector::find($pickerId);
+
+            $residentLocationId = $collection->location_id;
+            $location = Location::find($residentLocationId);
+
             //household notification
             Notification::create([
                 'resident_id'        => $collection->resident_id,
                 'waste_collector_id' => null,
                 'title'              => 'Picker Assigned',
-                'message'            => "You waste pickup order has been verified and a picker has been assigned to come pick up your waste. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'message'            => "You waste pickup order has been verified and a picker has been assigned to come pick up your waste. 
+                                        Pickup Date: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
+                                        Picker's Name: {$pickerName->firstname} {$pickerName->lastname}.
+                                        Picker's Email: {$pickerName->email}.
+                                        Picker's Phone: {$pickerName->phone_number}",
                 'message_type'       => 'picker_assigned',
             ]);
 
             //update status of waste from pending to verified.
             WasteInvoice::where('collection_id', $collection->id)
             ->update(['status' => 'verified']);
+            $resident = $collection->resident_id;
+            $residentName = Resident::find($resident);
 
             //picker notification
             Notification::create([
                 'resident_id'        => null,
                 'waste_collector_id' => $collection->waste_collector_id,
-                'title'              => 'New Waste Collection Assigned',
-                'message'            => "A new waste collection has been assigned to you. Pickup: {$request->pickup_on}, Delivery: {$request->delivered_on}.",
+                'title'              => 'Collection Assigned',
+                'message'            => "A new waste collection has been assigned to you.
+                                        Pickup: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
+                                        Resident's Name: {$residentName->fullname}
+                                        Resident's Email: {$residentName->email}
+                                        Resident's Phone: {$residentName->phone_number}
+                                        Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.",
                 'message_type'       => 'picker_assigned',
             ]);
         });
@@ -204,7 +269,7 @@ class CollectionController extends Controller
         $from = Carbon::now()->subHours(5); //5 hours ago
         $to   = Carbon::now()->subSecond(); //1 second ago
 
-        $collections = Collection::with(['wasteInvoices' => function ($query) use ($from, $to) {
+        $collections = Collection::with(['wasteInvoices', 'location' => function ($query) use ($from, $to) {
             $query->whereBetween('created_at', [$from, $to]);
         }])
         ->where('status', 'awaiting picker') //only collections still awaiting picker
@@ -224,6 +289,65 @@ class CollectionController extends Controller
             'status'  => true,
             'message' => 'New requests fetched successfully',
             'data'    => $collections
+        ]);
+    }
+
+    public function onGoing($waste_collector_id){
+        $collection = Collection::where('status', 'picker assigned')
+            ->with(['wasteInvoices', 'location'])
+            ->where('waste_collector_id', $waste_collector_id)
+            ->latest()
+            ->get();
+
+        if ($collection->isEmpty()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'No ongoing collections found',
+            ]);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Ongoing collections fetched successfully',
+            'data'    => $collection
+        ]);
+    }
+
+    public function cancelAssignment($id, Collection $collection){
+        $collection = Collection::find($id);
+        $wci = $collection->waste_collector_id;
+        WasteInvoice::where('collection_id', $id)->update(['status' => 'pending']);
+
+        $collection->waste_collector_id = null;
+        $collection->status = 'awaiting picker';
+        $collection->pickup_on_time = null;
+        $collection->save();
+
+        //refresh to make sure it has the updated waste_collector_id
+        $collection->refresh();
+
+        //household notification
+        Notification::create([
+            'resident_id'        => $collection->resident_id,
+            'waste_collector_id' => null,
+            'title'              => 'Picker Cancelled',
+            'message'            => "You waste pickup order was cancelled and status now back to pending. We are sorry for the inconvenience.",
+            'message_type'       => 'picker_cancelled',
+        ]);
+
+        //picker notification
+        Notification::create([
+            'resident_id'        => null,
+            'waste_collector_id' => $wci,
+            'title'              => 'You Cancelled',
+            'message'            => "You cancelled a waste pickup order. Your assigned picker has been notified.",
+            'message_type'       => 'picker_cancelled',
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Collection assignment cancelled successfully',
+            'data' => $collection
         ]);
     }
 
