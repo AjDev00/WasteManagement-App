@@ -17,8 +17,19 @@ class Collection extends Model
         'accepted_by',
         'picture',
         'summary',
-        'status'
+        'status',
+        'completed_at',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($collection) {
+            // If status is set to completed and completed_at is not already set
+            if ($collection->status === 'completed' && is_null($collection->completed_at)) {
+                $collection->completed_at = now();
+            }
+        });
+    }
 
     public function wasteInvoices()
     {

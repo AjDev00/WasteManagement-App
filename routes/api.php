@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\EarningController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MessagingController;
@@ -33,9 +34,12 @@ Route::get('/picker', function (Request $request) {
 
 Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
-Route::get('/completed-stats', [ReportController::class, 'completedStats']);
+Route::get('/completed-stats/{waste_collector_id}', [ReportController::class, 'completedStats']);
 Route::get('/completed-daily-this-week', [ReportController::class, 'dailyCompletedThisWeek']);
 Route::get('/completed-between', [ReportController::class, 'completedBetween']);
+
+Route::post('/earnings/accepted', [EarningController::class, 'acceptedWaste']);
+Route::get('/earnings/{resident_id}', [EarningController::class, 'getEarnings']);
 
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
@@ -96,6 +100,7 @@ Route::get('/all-collections', [CollectionController::class, 'viewAllCollections
 Route::get('/filtervia-location/{locationName}', [CollectionController::class, 'filterCollectionViaLocation']);
 Route::get('/ongoing/{waste_collector_id}', [CollectionController::class, 'onGoing']);
 Route::put('/collection/{id}/cancel', [CollectionController::class, 'cancelAssignment']);
+Route::get('/completed/{waste_collector_id}', [CollectionController::class, 'completed']);
 Route::put('/collection/{id}', [CollectionController::class, 'updateCollection']);
 
 // Waste Invoice routes.

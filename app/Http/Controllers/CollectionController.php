@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\Earning;
 use App\Models\Location;
 use App\Models\Notification;
 use App\Models\Resident;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CollectionController extends Controller
@@ -221,6 +223,16 @@ class CollectionController extends Controller
             $residentLocationId = $collection->location_id;
             $location = Location::find($residentLocationId);
 
+            $referenceNo = strtoupper(Str::random(10));
+            Earning::create([
+                'resident_id'        => $collection->resident_id,
+                'waste_collector_id' => $pickerId,
+                'collection_id'      => $collection->id,
+                'earning'            => 0, // no payment yet
+                'total_earning'      => 0, // no total yet
+                'reference_no'       => $referenceNo,
+            ]);
+
             //household notification
             Notification::create([
                 'resident_id'        => $collection->resident_id,
@@ -230,7 +242,9 @@ class CollectionController extends Controller
                                         Pickup Date: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
                                         Picker's Name: {$pickerName->firstname} {$pickerName->lastname}.
                                         Picker's Email: {$pickerName->email}.
-                                        Picker's Phone: {$pickerName->phone_number}",
+                                        Picker's Phone: {$pickerName->phone_number}
+                                        Waste Ref No: {$collection->id}
+                                        Verification Ref No: {$referenceNo}",
                 'message_type'       => 'picker_assigned',
             ]);
 
@@ -250,7 +264,8 @@ class CollectionController extends Controller
                                         Resident's Name: {$residentName->fullname}
                                         Resident's Email: {$residentName->email}
                                         Resident's Phone: {$residentName->phone_number}
-                                        Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.",
+                                        Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.
+                                        Waste Ref No: {$collection->id}",
                 'message_type'       => 'picker_assigned',
             ]);
         });
@@ -292,6 +307,7 @@ class CollectionController extends Controller
         ]);
     }
 
+    //get ongoing invoices.
     public function onGoing($waste_collector_id){
         $collection = Collection::where('status', 'picker assigned')
             ->with(['wasteInvoices', 'location'])
@@ -313,6 +329,29 @@ class CollectionController extends Controller
         ]);
     }
 
+    //get completed invoices.
+    public function completed($waste_collector_id){
+        $collection = Collection::where('status', 'completed')
+            ->with(['wasteInvoices', 'location'])
+            ->where('waste_collector_id', $waste_collector_id)
+            ->latest()
+            ->get();
+
+        if ($collection->isEmpty()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'No ongoing collections found',
+            ]);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Completed collections fetched successfully',
+            'data'    => $collection
+        ]);
+    }
+
+    //cancel picker assignment.
     public function cancelAssignment($id, Collection $collection){
         $collection = Collection::find($id);
         $wci = $collection->waste_collector_id;
@@ -331,7 +370,8 @@ class CollectionController extends Controller
             'resident_id'        => $collection->resident_id,
             'waste_collector_id' => null,
             'title'              => 'Picker Cancelled',
-            'message'            => "You waste pickup order was cancelled and status now back to pending. We are sorry for the inconvenience.",
+            'message'            => "You waste pickup order was cancelled and status now back to pending. We are sorry for the inconvenience.
+                                    Waste Ref No: {$collection->id}",
             'message_type'       => 'picker_cancelled',
         ]);
 
@@ -340,7 +380,8 @@ class CollectionController extends Controller
             'resident_id'        => null,
             'waste_collector_id' => $wci,
             'title'              => 'You Cancelled',
-            'message'            => "You cancelled a waste pickup order. Your assigned picker has been notified.",
+            'message'            => "You cancelled a waste pickup order. Your assigned resident has been notified.
+                                    Waste Ref No: {$collection->id}",   
             'message_type'       => 'picker_cancelled',
         ]);
 
