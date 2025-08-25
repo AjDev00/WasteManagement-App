@@ -231,6 +231,7 @@ class CollectionController extends Controller
                 'earning'            => 0, // no payment yet
                 'total_earning'      => 0, // no total yet
                 'reference_no'       => $referenceNo,
+                'used_at'            => null,
             ]);
 
             //household notification
@@ -242,9 +243,9 @@ class CollectionController extends Controller
                                         Pickup Date: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
                                         Picker's Name: {$pickerName->firstname} {$pickerName->lastname}.
                                         Picker's Email: {$pickerName->email}.
-                                        Picker's Phone: {$pickerName->phone_number}
-                                        Waste Ref No: {$collection->id}
-                                        Verification Ref No: {$referenceNo}",
+                                        Picker's Phone: {$pickerName->phone_number}.
+                                        Waste Ref No: {$collection->id}.
+                                        Verification Ref No: {$referenceNo}.",
                 'message_type'       => 'picker_assigned',
             ]);
 
@@ -261,11 +262,11 @@ class CollectionController extends Controller
                 'title'              => 'Collection Assigned',
                 'message'            => "A new waste collection has been assigned to you.
                                         Pickup: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
-                                        Resident's Name: {$residentName->fullname}
-                                        Resident's Email: {$residentName->email}
-                                        Resident's Phone: {$residentName->phone_number}
+                                        Resident's Name: {$residentName->fullname}.
+                                        Resident's Email: {$residentName->email}.
+                                        Resident's Phone: {$residentName->phone_number}.
                                         Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.
-                                        Waste Ref No: {$collection->id}",
+                                        Waste Ref No: {$collection->id}.",
                 'message_type'       => 'picker_assigned',
             ]);
         });
