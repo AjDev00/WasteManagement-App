@@ -129,11 +129,8 @@ class WasteCollectorController extends Controller
        'firstname' => 'required|string|min:3',
         'lastname' => 'required|string|min:3',
         'email' => 'required|email|unique:waste_collectors,email',
-        'phone_number' => 'required|min:10|max:15',
+        'phone_number' => 'required|min:10|max:15|unique:waste_collectors,phone_number',
         'password' => 'required|string|min:8',
-        'bank_name' => 'required|string',
-        'bank_account_number' => 'required|string|min:10|max:15',
-        'is_verified' => 'required|boolean'
     ]);
 
     if($validator->fails()){
@@ -148,18 +145,26 @@ class WasteCollectorController extends Controller
         $wasteCollector->lastname = $request->lastname;
         $wasteCollector->email = $request->email;
         $wasteCollector->phone_number = $request->phone_number;
-         if($request->filled('password')){
+        if($request->filled('password')){
             $wasteCollector->password = bcrypt($request->password);
         }
-        $wasteCollector->bank_name = $request->bank_name;
-        $wasteCollector->bank_account_number = $request->bank_account_number;
-        $wasteCollector->is_verified = $request->is_verified;
 
         $wasteCollector->save();
+
         return response()->json([
             'status' => true,
             'message' => 'Updated Successfully',
             'data' => $wasteCollector
         ]);
    }
+
+   public function logout(Request $request){
+        //get all user with the token and delete all.
+        $request->wasteCollector()->tokens()->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Log out successfull!'
+        ]);
+    }
 }

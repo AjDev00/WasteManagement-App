@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\EarningController;
 use App\Http\Controllers\FeedbackController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\TempImageController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\WasteCollectorController;
 use App\Http\Controllers\WasteInvoiceController;
+use App\Models\WasteCollector;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +43,12 @@ Route::get('/completed-between', [ReportController::class, 'completedBetween']);
 Route::post('/earnings/accepted', [EarningController::class, 'acceptedWaste']);
 Route::get('/earnings/{resident_id}', [EarningController::class, 'getEarnings']);
 
+//admin routes.
+Route::get('/get-all-resident-details', [AdminController::class, 'getAllResidentDetailsWithInvoicesAndLocation']);
+Route::get('/get-specific-resident-details/{residentName}', [AdminController::class, 'getSpecificResidentDetailsWithInvoicesAndLocation']);
+Route::get('/get-specific-picker-details/{pickerName}', [AdminController::class, 'getSpecificWasteCollectorWithInvoicesHandled']);
+Route::get('/get-all-picker-details', [AdminController::class, 'getAllWasteCollectorWithInvoicesHandles']);
+
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
 
@@ -57,6 +65,7 @@ Route::post('/resident/login', [ResidentController::class, 'loginResident']);
 Route::get('/resident/{id}', [ResidentController::class, 'showResident']);
 Route::get('/residents', [ResidentController::class, 'showAllResidents']);
 Route::put('/resident/{id}', [ResidentController::class, 'updateResident']);
+Route::post('/logout', [ResidentController::class, 'logout'])->middleware('auth:resident');
 
 // Waste Collectors routes.
 Route::post('/waste-collector', [WasteCollectorController::class, 'storeWasteCollector']);
@@ -65,6 +74,7 @@ Route::get('/all-collection', [WasteCollectorController::class, 'showAllCollecti
 Route::get('/waste-collector/{id}', [WasteCollectorController::class, 'showWasteCollector']);
 Route::get('/waste-collectors', [WasteCollectorController::class, 'showAllWasteCollector']);
 Route::put('/waste-collector/{id}', [WasteCollectorController::class, 'updateWasteCollector']);
+Route::post('/logoutW', [WasteCollectorController::class, 'logout'])->middleware('auth:waste_collector');
 
 // Type routes.
 Route::post('/type', [TypeController::class, 'storeType']);

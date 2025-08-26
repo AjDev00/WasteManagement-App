@@ -107,11 +107,9 @@ class ResidentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|min:3',
-            'address' => 'required|string|min:5',
-            'phone_number' => 'required|min:10|max:15',
+            'phone_number' => 'required|min:10|max:15|unique:residents,phone_number',
             'email' => 'required|email|unique:residents,email,',
-            'password' => 'nullable|string|min:8',
-            'created_by' => 'required|string',
+            'password' => 'required|string|min:8',
         ]);
 
         //error handling
@@ -125,21 +123,28 @@ class ResidentController extends Controller
 
         // Update the resident
         $resident->fullname = $request->fullname;
-        $resident->address = $request->address;
         $resident->phone_number = $request->phone_number;
         $resident->email = $request->email;
         if($request->filled('password')){
             $resident->password = bcrypt($request->password);
         }
-        $resident->created_by = $request->created_by;
-        $resident->modified_by = $request->modified_by;
-        $resident->status = $request->status;
         $resident->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Resident updated successfully',
             'data' => $resident
+        ]);
+    }
+
+    //logout users.
+    public function logout(Request $request){
+        //get all user with the token and delete all.
+        $request->resident()->tokens()->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Log out successfull!'
         ]);
     }
 }

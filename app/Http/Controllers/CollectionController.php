@@ -217,19 +217,26 @@ class CollectionController extends Controller
             //refresh to make sure it has the updated waste_collector_id
             $collection->refresh();
 
+            //get picker id and name.
             $pickerId = $collection->waste_collector_id;
             $pickerName = WasteCollector::find($pickerId);
 
+            //get resident's location.
             $residentLocationId = $collection->location_id;
             $location = Location::find($residentLocationId);
 
+            $resident = $collection->resident_id;
+            
+            //get resident’s current total before this assignment
+            $previousTotal = Earning::where('resident_id', $resident)->sum('earning');
             $referenceNo = strtoupper(Str::random(10));
+
             Earning::create([
                 'resident_id'        => $collection->resident_id,
                 'waste_collector_id' => $pickerId,
                 'collection_id'      => $collection->id,
                 'earning'            => 0, // no payment yet
-                'total_earning'      => 0, // no total yet
+                'total_earning'      => $previousTotal, //snapshot of total at assignment time
                 'reference_no'       => $referenceNo,
                 'used_at'            => null,
             ]);
@@ -252,7 +259,7 @@ class CollectionController extends Controller
             //update status of waste from pending to verified.
             WasteInvoice::where('collection_id', $collection->id)
             ->update(['status' => 'verified']);
-            $resident = $collection->resident_id;
+            
             $residentName = Resident::find($resident);
 
             //picker notification
@@ -356,6 +363,7 @@ class CollectionController extends Controller
     public function cancelAssignment($id, Collection $collection){
         $collection = Collection::find($id);
         $wci = $collection->waste_collector_id;
+
         WasteInvoice::where('collection_id', $id)->update(['status' => 'pending']);
 
         $collection->waste_collector_id = null;

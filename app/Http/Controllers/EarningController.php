@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class EarningController extends Controller
 {
-    public function acceptedWaste(Request $request)
+     public function acceptedWaste(Request $request)
 {
     // Validate incoming request
     $earnings = $request->validate([
@@ -82,6 +82,7 @@ class EarningController extends Controller
         ], 422);
     }
 }
+
 
     public function getEarnings($resident_id)
     {
