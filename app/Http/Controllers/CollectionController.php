@@ -205,85 +205,112 @@ class CollectionController extends Controller
             'pickup_on_time'     => 'required'
         ]);
 
-        DB::transaction(function () use ($request, $collection) {
-            //update the collection
-            $collection->update([
-                'waste_collector_id' => $request->waste_collector_id,
-                'pickup_on'          => $request->pickup_on,
-                'pickup_on_time'     => $request->pickup_on_time,
-                'status'             => 'picker assigned'
+        try {
+            DB::transaction(function () use ($request, $collection) {
+                //update the collection
+                $collection->update([
+                    'waste_collector_id' => $request->waste_collector_id,
+                    'pickup_on'          => $request->pickup_on,
+                    'pickup_on_time'     => $request->pickup_on_time,
+                    'status'             => 'picker assigned'
+                ]);
+
+                //refresh to make sure it has the updated waste_collector_id
+                $collection->refresh();
+
+                //get picker id and name.
+                $pickerId = $collection->waste_collector_id;
+                $pickerName = WasteCollector::find($pickerId);
+
+                //get resident's location.
+                $residentLocationId = $collection->location_id;
+                $location = Location::find($residentLocationId);
+
+                $resident = $collection->resident_id;
+                
+                $referenceNo = Str::uuid()->toString();
+
+                //get resident’s current total before this assignment
+                $previousTotal = Earning::where('resident_id', $resident)->sum('earning');
+
+                $previousTotal1 = Earning::where('waste_collector_id', $pickerId)->sum('earning');
+
+                //create earning for resident.
+                Earning::create([
+                    'resident_id'        => $collection->resident_id,
+                    'waste_collector_id' => null,
+                    'collection_id'      => $collection->id,
+                    'earning'            => 0, // no payment yet
+                    'total_earning'      => $previousTotal, //snapshot of total at assignment time
+                    'reference_no'       => $referenceNo,
+                    'authorized_by'      => null, //not yet authorized
+                    'total_kg'           => null,
+                    'used_at'            => null,
+                ]);
+
+                //create earning for picker.
+                Earning::create([
+                    'resident_id'        => null,
+                    'waste_collector_id' => $pickerId,
+                    'collection_id'      => $collection->id,
+                    'earning'            => 0, // no payment yet
+                    'total_earning'      => $previousTotal1, //snapshot of total at assignment time
+                    'reference_no'       => $referenceNo,
+                    'authorized_by'      => null, //not yet authorized.
+                    'total_kg'           => null,
+                    'used_at'            => null,
+                ]);
+
+                //household notification
+                Notification::create([
+                    'resident_id'        => $collection->resident_id,
+                    'waste_collector_id' => null,
+                    'title'              => 'Picker Assigned',
+                    'message'            => "You waste pickup order has been verified and a picker has been assigned to come pick up your waste. 
+                                            Pickup Date: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
+                                            Picker's Name: {$pickerName->firstname} {$pickerName->lastname}.
+                                            Picker's Email: {$pickerName->email}.
+                                            Picker's Phone: {$pickerName->phone_number}.
+                                            Waste Ref No: {$collection->id}.
+                                            Verification Ref No: {$referenceNo}.",
+                    'message_type'       => 'picker_assigned',
+                ]);
+
+                //update status of waste from pending to verified.
+                WasteInvoice::where('collection_id', $collection->id)
+                ->update(['status' => 'verified']);
+                
+                $residentName = Resident::find($resident);
+
+                //picker notification
+                Notification::create([
+                    'resident_id'        => null,
+                    'waste_collector_id' => $collection->waste_collector_id,
+                    'title'              => 'Collection Assigned',
+                    'message'            => "A new waste collection has been assigned to you.
+                                            Pickup: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
+                                            Resident's Name: {$residentName->fullname}.
+                                            Resident's Email: {$residentName->email}.
+                                            Resident's Phone: {$residentName->phone_number}.
+                                            Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.
+                                            Waste Ref No: {$collection->id}.",
+                    'message_type'       => 'picker_assigned',
+                ]);
+            });
+
+            return response()->json([
+                'status'    => true,
+                'message'   => 'Picker assigned successfully',
+                'notification' => 'You have a new notification',
+                'data'      => $collection->fresh()
             ]);
 
-            //refresh to make sure it has the updated waste_collector_id
-            $collection->refresh();
-
-            //get picker id and name.
-            $pickerId = $collection->waste_collector_id;
-            $pickerName = WasteCollector::find($pickerId);
-
-            //get resident's location.
-            $residentLocationId = $collection->location_id;
-            $location = Location::find($residentLocationId);
-
-            $resident = $collection->resident_id;
-            
-            //get resident’s current total before this assignment
-            $previousTotal = Earning::where('resident_id', $resident)->sum('earning');
-            $referenceNo = strtoupper(Str::random(10));
-
-            Earning::create([
-                'resident_id'        => $collection->resident_id,
-                'waste_collector_id' => $pickerId,
-                'collection_id'      => $collection->id,
-                'earning'            => 0, // no payment yet
-                'total_earning'      => $previousTotal, //snapshot of total at assignment time
-                'reference_no'       => $referenceNo,
-                'used_at'            => null,
-            ]);
-
-            //household notification
-            Notification::create([
-                'resident_id'        => $collection->resident_id,
-                'waste_collector_id' => null,
-                'title'              => 'Picker Assigned',
-                'message'            => "You waste pickup order has been verified and a picker has been assigned to come pick up your waste. 
-                                        Pickup Date: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
-                                        Picker's Name: {$pickerName->firstname} {$pickerName->lastname}.
-                                        Picker's Email: {$pickerName->email}.
-                                        Picker's Phone: {$pickerName->phone_number}.
-                                        Waste Ref No: {$collection->id}.
-                                        Verification Ref No: {$referenceNo}.",
-                'message_type'       => 'picker_assigned',
-            ]);
-
-            //update status of waste from pending to verified.
-            WasteInvoice::where('collection_id', $collection->id)
-            ->update(['status' => 'verified']);
-            
-            $residentName = Resident::find($resident);
-
-            //picker notification
-            Notification::create([
-                'resident_id'        => null,
-                'waste_collector_id' => $collection->waste_collector_id,
-                'title'              => 'Collection Assigned',
-                'message'            => "A new waste collection has been assigned to you.
-                                        Pickup: {$request->pickup_on}, Pickup Time: {$request->pickup_on_time}.
-                                        Resident's Name: {$residentName->fullname}.
-                                        Resident's Email: {$residentName->email}.
-                                        Resident's Phone: {$residentName->phone_number}.
-                                        Resident's Location: {$location->title}, {$location->country}, {$location->state}, {$location->city}.
-                                        Waste Ref No: {$collection->id}.",
-                'message_type'       => 'picker_assigned',
-            ]);
-        });
-
-        return response()->json([
-            'status'    => true,
-            'message'   => 'Picker assigned successfully',
-            'notification' => 'You have a new notification',
-            'data'      => $collection->fresh()
-        ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 
     //get waste within a particular waste invoice.

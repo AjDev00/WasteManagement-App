@@ -13,5 +13,7 @@ class Earning extends Model
         'earning',
         'total_earning',
         'reference_no',
+        'authorized_by',
+        'total_kg',
     ];
 }

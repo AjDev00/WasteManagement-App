@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Collection;
 use App\Models\Location;
+use App\Models\Notification;
 use App\Models\Resident;
 use App\Models\WasteCollector;
+use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -148,6 +150,65 @@ class AdminController extends Controller
         return response()->json([
             'status' => true,
             'data' => $collectorsWithStats,
+        ]);
+    }
+
+    //view all withdrawal requests.
+    public function viewAllWithdrawalRequests(){
+        $withReq = WithdrawalRequest::with(['resident', 'picker'])->latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $withReq
+        ]);
+    }
+
+    //update a single withdrawal request to approved.
+    public function approvePayments(Request $request, $id){
+        $data = $request->validate([
+            'approved_by' => 'required|exists:supervisors,id',
+        ]);
+
+        $withdrawalRequest = WithdrawalRequest::find($id);
+
+        if (!$withdrawalRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Withdrawal request not found.'
+            ], 404);
+        }
+
+        $withdrawalRequest->update([
+            'status' => 'approved',
+            'approved_by' => $data['approved_by'],
+        ]);
+
+        //create notification if resident.
+        if($withdrawalRequest->resident_id){
+            Notification::create([
+                'resident_id'        => $withdrawalRequest->resident_id,
+                'waste_collector_id' => null,
+                'title'              => 'Withdrawal Approved',
+                'message'            => "Your withdrawal request has been approved and payment has been made to your bank account.",
+                'message_type'       => 'withdrawal_approved',
+            ]);
+        }
+
+        //create notification if picker.
+        if($withdrawalRequest->waste_collector_id){
+            Notification::create([
+                'resident_id'        => null,
+                'waste_collector_id' => $withdrawalRequest->waste_collector_id,
+                'title'              => 'Withdrawal Approved',
+                'message'            => "Your withdrawal request has been approved and payment has been made to your bank account.",
+                'message_type'       => 'withdrawal_approved',
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Withdrawal request approved successfully!',
+            'data' => $withdrawalRequest, // ✅ return the updated model instead of []
         ]);
     }
 

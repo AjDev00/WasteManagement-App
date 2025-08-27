@@ -16,6 +16,7 @@ use App\Http\Controllers\TempImageController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\WasteCollectorController;
 use App\Http\Controllers\WasteInvoiceController;
+use App\Http\Controllers\WithdrawalRequestController;
 use App\Models\WasteCollector;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
@@ -46,12 +47,18 @@ Route::get('/completed-between', [ReportController::class, 'completedBetween']);
 
 Route::post('/earnings/accepted', [EarningController::class, 'acceptedWaste']);
 Route::get('/earnings/{resident_id}', [EarningController::class, 'getEarnings']);
+Route::get('/earningsWC/{waste_collector_id}', [EarningController::class, 'getWCEarnings']);
+
+Route::post('/withdrawal-request', [WithdrawalRequestController::class, 'storeResiWithdrawalRequest']);
+Route::post('/p-withdrawal-request', [WithdrawalRequestController::class, 'storePickerWithdrawalRequest']);
 
 //admin routes.
 Route::get('/get-all-resident-details', [AdminController::class, 'getAllResidentDetailsWithInvoicesAndLocation']);
 Route::get('/get-specific-resident-details/{residentName}', [AdminController::class, 'getSpecificResidentDetailsWithInvoicesAndLocation']);
 Route::get('/get-specific-picker-details/{pickerName}', [AdminController::class, 'getSpecificWasteCollectorWithInvoicesHandled']);
 Route::get('/get-all-picker-details', [AdminController::class, 'getAllWasteCollectorWithInvoicesHandles']);
+Route::get('/view-all-withdraw-requests', [AdminController::class, 'viewAllWithdrawalRequests']);
+Route::put('/approve-payments/{id}', [AdminController::class, 'approvePayments']);
 
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
