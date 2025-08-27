@@ -27,5 +27,9 @@ class AppServiceProvider extends ServiceProvider
         Request::macro('wasteCollector', function() {
             return auth('waste_collector')->user();
         });
+
+        Request::macro('supervisor', function() {
+            return auth('supervisor')->user();
+        });
     }
 }

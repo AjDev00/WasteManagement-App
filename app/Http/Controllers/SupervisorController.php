@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class SupervisorController extends Controller
@@ -15,8 +16,6 @@ class SupervisorController extends Controller
             'email' => 'required|email|unique:supervisors,email',
             'phone_number' => 'required|min:10|max:15',
             'password' => 'required|string|min:8',
-            'location_id' => 'required|exists:locations,id',
-            'created_by' => 'required|string'
         ]);
 
         //error handling
@@ -34,14 +33,50 @@ class SupervisorController extends Controller
         $supervisor->email = $request->email;
         $supervisor->phone_number = $request->phone_number;
         $supervisor->password = bcrypt($request->password);
-        $supervisor->location_id = $request->location_id;
-        $supervisor->created_by = $request->created_by;
         $supervisor->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Supervisor created successfully',
             'data' => $supervisor
+        ]);
+    }
+
+    //login
+    public function loginSupervisor(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        //check if the supervisor exists
+        $supervisor = Supervisor::where('email', $request->email)->first();
+
+        if(!$supervisor || !Hash::check($request->password, $supervisor->password)){
+            return response()->json([
+                'status' => false,
+                'message' => 'Email or password incorrect'
+            ]);
+        }
+
+        $token = $supervisor->createToken($supervisor->fullname);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login successful',
+            'data' => $supervisor,
+            'token' => $token->plainTextToken
+        ]);
+    }
+
+    //logout.
+    public function logout(Request $request){
+        //get all user with the token and delete all.
+        $request->supervisor()->tokens()->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Log out successfull!'
         ]);
     }
 

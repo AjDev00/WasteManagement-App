@@ -34,6 +34,10 @@ Route::get('/picker', function (Request $request) {
     return $request->wasteCollector();
 })->middleware('auth:waste_collector');
 
+Route::get('/super', function (Request $request) {
+    return $request->supervisor();
+})->middleware('auth:supervisor');
+
 Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
 Route::get('/completed-stats/{waste_collector_id}', [ReportController::class, 'completedStats']);
@@ -97,6 +101,8 @@ Route::put('/location/{id}', [LocationController::class, 'updateLocation']);
 
 // Supervisor routes.
 Route::post('/supervisor', [SupervisorController::class, 'storeSupervisor']);
+Route::post('/supervisor/login', [SupervisorController::class, 'loginSupervisor']);
+Route::post('/logoutS', [SupervisorController::class, 'logout'])->middleware('auth:supervisor');
 Route::get('/supervisor/{id}', [SupervisorController::class, 'showSupervisor']);
 Route::get('/supervisors', [SupervisorController::class, 'showAllSupervisor']);
 Route::put('/supervisor/{id}', [SupervisorController::class, 'updateSupervisor']);

@@ -49,6 +49,11 @@ return [
         'waste_collector' => [
             'driver' => 'sanctum',
             'provider' => 'waste_collectors',
+        ],
+
+        'supervisor' => [
+            'driver' => 'sanctum',
+            'provider' => 'supervisor',
         ]
     ],
 
@@ -83,6 +88,11 @@ return [
         'waste_collectors' => [
             'driver' => 'eloquent',
             'model' => App\Models\WasteCollector::class,
+        ],
+
+        'supervisor' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Supervisor::class,
         ],
 
         // 'users' => [

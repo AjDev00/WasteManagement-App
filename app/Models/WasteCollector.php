@@ -27,4 +27,8 @@ class WasteCollector extends Model
     protected $hidden = [
         'password',
     ];
+
+    public function collection() {
+        return $this->hasMany(Collection::class);
+    }
 }
