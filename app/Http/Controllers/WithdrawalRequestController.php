@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Earning;
 use App\Models\Notification;
+use App\Models\Transaction;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
 
@@ -62,6 +63,16 @@ class WithdrawalRequestController extends Controller
             'message_type'       => 'withdrawal_request',
         ]);
 
+        //create transaction receipt for resident.
+        Transaction::create([
+            'resident_id' => $withdraw->resident_id,
+            'waste_collector_id' => null,
+            'title' => 'Points Redeemed',
+            'description' => 'your points has been redeemed by Seikula',
+            'amount' => $withdrawDetails['amount'],
+            'status' => 'Pending'
+        ]);
+
         return response()->json([
             'status' => true,
             'message' => 'Withdrawal request made successfully!',
@@ -69,7 +80,6 @@ class WithdrawalRequestController extends Controller
             'remaining_balance' => $earning->total_earning
         ]);
     }
-
 
     public function storePickerWithdrawalRequest(Request $request){
         $withdrawDetails = $request->validate([
@@ -122,6 +132,16 @@ class WithdrawalRequestController extends Controller
             'title'              => 'Withdrawal Request',
             'message'            => "Your withdrawal request of {$withdrawDetails['amount']} WSC is processing. Check your transactions to monitor.",
             'message_type'       => 'withdrawal_request',
+        ]);
+
+        //create transaction receipt for picker.
+        Transaction::create([
+            'resident_id' => null,
+            'waste_collector_id' => $withdraw->waste_collector_id,
+            'title' => 'Points Redeemed',
+            'description' => 'your points has been redeemed by Seikula',
+            'amount' => $withdrawDetails['amount'],
+            'status' => 'Pending'
         ]);
 
         return response()->json([

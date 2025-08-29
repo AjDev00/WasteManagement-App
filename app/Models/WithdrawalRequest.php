@@ -24,4 +24,8 @@ class WithdrawalRequest extends Model
     public function picker() {
         return $this->belongsTo(WasteCollector::class, 'waste_collector_id');
     }
+
+    public function supervisor() {
+        return $this->belongsTo(Supervisor::class, 'approved_by');
+    }
 }

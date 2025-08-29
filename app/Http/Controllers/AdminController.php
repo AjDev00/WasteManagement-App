@@ -6,6 +6,7 @@ use App\Models\Collection;
 use App\Models\Location;
 use App\Models\Notification;
 use App\Models\Resident;
+use App\Models\Transaction;
 use App\Models\WasteCollector;
 use App\Models\WithdrawalRequest;
 use Illuminate\Http\Request;
@@ -155,11 +156,74 @@ class AdminController extends Controller
 
     //view all withdrawal requests.
     public function viewAllWithdrawalRequests(){
-        $withReq = WithdrawalRequest::with(['resident', 'picker'])->latest()->get();
+        $withReq = WithdrawalRequest::with(['resident', 'picker', 'supervisor'])
+                   ->where('status', 'pending')->latest()->get();
 
         return response()->json([
             'status' => true,
             'data' => $withReq
+        ]);
+    }
+
+    public function viewAllPaidWithdrawalRequests(){
+        $withReq = WithdrawalRequest::with(['resident', 'picker', 'supervisor'])
+                   ->where('status', 'approved')->latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $withReq
+        ]);
+    }
+
+    public function viewSingleWithdrawalRequest($name){
+        $residentId = Resident::where('fullname', 'LIKE', "%{$name}%")->pluck('id')->first();
+        $pickerId   = WasteCollector::where('firstname', 'LIKE', "%{$name}%")
+                                    ->orWhere('lastname', 'LIKE', "%{$name}%")
+                                    ->pluck('id')
+                                    ->first();
+
+        $withdraw = WithdrawalRequest::with(['resident', 'picker'])
+                    ->where('status', 'pending')
+                    ->when($residentId, fn($q) => $q->where('resident_id', $residentId))
+                    ->when(!$residentId && $pickerId, fn($q) => $q->where('waste_collector_id', $pickerId))
+                    ->get();
+
+        if ($withdraw->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No withdrawal request found for this name.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => $withdraw,
+        ]);
+    }
+
+    public function viewSinglePaidWithdrawalRequest($name){
+        $residentId = Resident::where('fullname', 'LIKE', "%{$name}%")->pluck('id')->first();
+        $pickerId   = WasteCollector::where('firstname', 'LIKE', "%{$name}%")
+                                    ->orWhere('lastname', 'LIKE', "%{$name}%")
+                                    ->pluck('id')
+                                    ->first();
+
+        $withdraw = WithdrawalRequest::with(['resident', 'picker'])
+                    ->where('status', 'approved')
+                    ->when($residentId, fn($q) => $q->where('resident_id', $residentId))
+                    ->when(!$residentId && $pickerId, fn($q) => $q->where('waste_collector_id', $pickerId))
+                    ->get();
+
+        if ($withdraw->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No withdrawal request found for this name.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => $withdraw,
         ]);
     }
 
@@ -189,9 +253,12 @@ class AdminController extends Controller
                 'resident_id'        => $withdrawalRequest->resident_id,
                 'waste_collector_id' => null,
                 'title'              => 'Withdrawal Approved',
-                'message'            => "Your withdrawal request has been approved and payment has been made to your bank account.",
+                'message'            => "Your withdrawal request has been approved and payment has been made to the bank details you provided.",
                 'message_type'       => 'withdrawal_approved',
             ]);
+
+            Transaction::where('resident_id', $withdrawalRequest->resident_id)
+                        ->update(['status' => 'Approved']);
         }
 
         //create notification if picker.
@@ -200,9 +267,12 @@ class AdminController extends Controller
                 'resident_id'        => null,
                 'waste_collector_id' => $withdrawalRequest->waste_collector_id,
                 'title'              => 'Withdrawal Approved',
-                'message'            => "Your withdrawal request has been approved and payment has been made to your bank account.",
+                'message'            => "Your withdrawal request has been approved and payment has been made to the bank details you provided.",
                 'message_type'       => 'withdrawal_approved',
             ]);
+
+            Transaction::where('resident_id', $withdrawalRequest->waste_collector_id)
+                        ->update(['status' => 'Approved']);
         }
 
         return response()->json([

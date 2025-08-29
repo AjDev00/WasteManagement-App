@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Collection;
 use App\Models\Earning;
 use App\Models\Notification;
+use App\Models\Transaction;
 use App\Models\WasteCollector;
 use App\Models\WasteInvoice;
 use Illuminate\Http\Request;
@@ -102,6 +103,16 @@ class EarningController extends Controller
                     'message_type'       => 'payment_received',
                 ]);
 
+                //create transaction receipt for resident.
+                Transaction::create([
+                    'resident_id' => $collection->resident_id,
+                    'waste_collector_id' => null,
+                    'title' => 'Points Deposited',
+                    'description' => 'payment received from picker',
+                    'amount' => $earnings['earning'],
+                    'status' => 'Received'
+                ]);
+
                 // Create notification for picker
                 Notification::create([
                     'resident_id'        => null,
@@ -109,6 +120,16 @@ class EarningController extends Controller
                     'title'              => 'Payment Received',
                     'message'            => "Your payment of {$earnings['earning']} WSC has been received. Check available earnings.",
                     'message_type'       => 'payment_received',
+                ]);
+
+                //create transaction receipt for household.
+                Transaction::create([
+                    'resident_id' => null,
+                    'waste_collector_id' => $collection->waste_collector_id,
+                    'title' => 'Points Deposited',
+                    'description' => 'payment received from waste pickup',
+                    'amount' => $wcEarning,
+                    'status' => 'Received'
                 ]);
             });
 

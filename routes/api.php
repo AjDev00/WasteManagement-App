@@ -13,6 +13,7 @@ use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\TempImageController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\WasteCollectorController;
 use App\Http\Controllers\WasteInvoiceController;
@@ -58,10 +59,17 @@ Route::get('/get-specific-resident-details/{residentName}', [AdminController::cl
 Route::get('/get-specific-picker-details/{pickerName}', [AdminController::class, 'getSpecificWasteCollectorWithInvoicesHandled']);
 Route::get('/get-all-picker-details', [AdminController::class, 'getAllWasteCollectorWithInvoicesHandles']);
 Route::get('/view-all-withdraw-requests', [AdminController::class, 'viewAllWithdrawalRequests']);
+Route::get('/view-all-paid-requests', [AdminController::class, 'viewAllPaidWithdrawalRequests']);
+Route::get('/view-single-withdraw-request/{name}', [AdminController::class, 'viewSingleWithdrawalRequest']);
+Route::get('/view-single-paid-request/{name}', [AdminController::class, 'viewSinglePaidWithdrawalRequest']);
 Route::put('/approve-payments/{id}', [AdminController::class, 'approvePayments']);
 
 //store temp images.
 Route::post('/save-temp-image', [TempImageController::class, 'store']);
+
+//transaction routes.
+Route::get('/transactions/{residentId}', [TransactionController::class, 'getTransactions']);
+Route::get('/transactions-wc/{waste_collector_id}', [TransactionController::class, 'getWCTransactions']);
 
 //notifications route.
 Route::get('/notifications/{resident_id}', [NotificationController::class, 'showNotifications']);
