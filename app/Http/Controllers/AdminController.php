@@ -271,8 +271,8 @@ class AdminController extends Controller
                 'message_type'       => 'withdrawal_approved',
             ]);
 
-            Transaction::where('resident_id', $withdrawalRequest->waste_collector_id)
-                        ->update(['status' => 'Approved']);
+            // Transaction::where('resident_id', $withdrawalRequest->waste_collector_id)
+            //             ->update(['status' => 'Approved']);
         }
 
         return response()->json([
