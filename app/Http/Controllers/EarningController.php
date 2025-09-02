@@ -76,7 +76,7 @@ class EarningController extends Controller
 
                 $earningWCRecord->update([
                     // 'authorized_by'      => $earnings['authorized_by'],
-                    'earning'            => $earnings['earning'],
+                    'earning'            => $wcEarning,
                     'total_earning'      => $totalEarning1,
                     'total_kg'           => $earnings['total_kg']
                 ]);
@@ -118,7 +118,7 @@ class EarningController extends Controller
                     'resident_id'        => null,
                     'waste_collector_id' => $collection->waste_collector_id,
                     'title'              => 'Payment Received',
-                    'message'            => "Your payment of {$earnings['earning']} WSC has been received. Check available earnings.",
+                    'message'            => "Your payment of {$wcEarning} WSC has been received. Check available earnings.",
                     'message_type'       => 'payment_received',
                 ]);
 

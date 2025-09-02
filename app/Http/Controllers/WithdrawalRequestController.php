@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountDetail;
 use App\Models\Earning;
 use App\Models\Notification;
 use App\Models\Transaction;
@@ -51,7 +52,16 @@ class WithdrawalRequestController extends Controller
 
         // deduct balance
         $earning->update([
+            'earning' => $earning->earning - $withdrawDetails['amount'],
             'total_earning' => $earning->total_earning - $withdrawDetails['amount']
+        ]);
+
+        AccountDetail::create([
+            'resident_id'        => $withdrawDetails['resident_id'],
+            'waste_collector_id' => $withdrawDetails['waste_collector_id'],
+            'bank_name'          => $withdrawDetails['bank_name'],
+            'bank_account_number'=> $withdrawDetails['bank_account_number'],
+            'account_name'       => $withdrawDetails['account_name'],
         ]);
 
         // create notification
@@ -122,7 +132,16 @@ class WithdrawalRequestController extends Controller
 
         // deduct balance
         $earning->update([
+            'earning' => $earning->earning - $withdrawDetails['amount'],
             'total_earning' => $earning->total_earning - $withdrawDetails['amount']
+        ]);
+
+        AccountDetail::create([
+            'resident_id'        => $withdrawDetails['resident_id'],
+            'waste_collector_id' => $withdrawDetails['waste_collector_id'],
+            'bank_name'          => $withdrawDetails['bank_name'],
+            'bank_account_number'=> $withdrawDetails['bank_account_number'],
+            'account_name'       => $withdrawDetails['account_name'],
         ]);
 
         // create notification

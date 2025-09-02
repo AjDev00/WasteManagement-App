@@ -72,6 +72,25 @@ class WasteInvoiceController extends Controller
         ]);
     }
 
+    // public function deleteWasteInvoice($id){
+    //     $notification = WasteInvoice::find($id);
+
+    //     if(!$notification){
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Notification not found!'
+    //         ]);
+    //     }
+
+    //     $notification->delete();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Notification deleted!'
+    //     ]);
+
+    // }
+
     // Route for showing all waste invoices
     public function showAllWasteInvoice(){
         $waste_invoice = WasteInvoice::all();

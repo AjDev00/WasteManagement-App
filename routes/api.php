@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountDetailController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\EarningController;
@@ -52,6 +53,9 @@ Route::get('/earningsWC/{waste_collector_id}', [EarningController::class, 'getWC
 
 Route::post('/withdrawal-request', [WithdrawalRequestController::class, 'storeResiWithdrawalRequest']);
 Route::post('/p-withdrawal-request', [WithdrawalRequestController::class, 'storePickerWithdrawalRequest']);
+
+Route::get('/get-resi-accdetails/{resident_id}', [AccountDetailController::class, 'getResiAccountDetails']);
+Route::get('/get-WC-accdetails/{waste_collector_id}', [AccountDetailController::class, 'getWCAccountDetails']);
 
 //admin routes.
 Route::get('/get-all-resident-details', [AdminController::class, 'getAllResidentDetailsWithInvoicesAndLocation']);
@@ -144,11 +148,6 @@ Route::get('/filter_by_pending/{id}', [WasteInvoiceController::class, 'filterByP
 Route::get('/filter_by_verified/{id}', [WasteInvoiceController::class, 'filterByVerifiedStatus']);
 Route::get('/filter_by_delivered/{id}', [WasteInvoiceController::class, 'filterByDeliveredStatus']);
 Route::get('/filter_by_paid/{id}', [WasteInvoiceController::class, 'filterByPaidStatus']);
-// Route::get('/total_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfWasteInvoices']);
-// Route::get('/total_plastic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfPlasticWasteInvoices']);
-// Route::get('/total_ewaste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfEWasteInvoices']);
-// Route::get('/total_organic_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfOrganicWasteInvoices']);
-// Route::get('/total_cans_waste_invoice/{resident_id}', [WasteInvoiceController::class, 'getTotalAmountOfCansWasteInvoices']);
 
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);

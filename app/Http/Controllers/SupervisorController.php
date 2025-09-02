@@ -11,34 +11,25 @@ class SupervisorController extends Controller
 {
     //store a newly created supervisor.
     public function storeSupervisor(Request $request){
-        $validator = Validator::make($request->all(), [
+        $fields = $request->validate( [
             'fullname' => 'required|string|min:3',
             'email' => 'required|email|unique:supervisors,email',
-            'phone_number' => 'required|min:10|max:15',
-            'password' => 'required|string|min:8',
+            'phone_number' => 'required|min:10|max:15|unique:supervisors,email',
+            'password' => 'required|string|min:8|confirmed' , 
         ]);
 
-        //error handling
-        if($validator->fails()){
-            return response()->json([
-                'status' => false,
-                'message' => 'Please fix the following errors',
-                'errors' => $validator->errors()
-            ]);
-        }
+         //hash the password
+        $fields['password'] = Hash::make($fields['password']);
 
-        // Create the location
-        $supervisor = new Supervisor();
-        $supervisor->fullname = $request->fullname;
-        $supervisor->email = $request->email;
-        $supervisor->phone_number = $request->phone_number;
-        $supervisor->password = bcrypt($request->password);
-        $supervisor->save();
+        $supervisor = Supervisor::create($fields);
+
+        $token = $supervisor->createToken($request->fullname);
 
         return response()->json([
             'status' => true,
             'message' => 'Supervisor created successfully',
-            'data' => $supervisor
+            'data' => $supervisor,
+            'token' => $token->plainTextToken
         ]);
     }
 

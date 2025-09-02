@@ -117,13 +117,13 @@ class CollectionController extends Controller
             $collection->update(['amount_total' => $totalAmount]);
 
             //household notification
-            Notification::create([
-                'resident_id'        => $collection->resident_id,
-                'waste_collector_id' => null,
-                'title'              => 'Waste Added',
-                'message'            => "You added waste. Your request has been received and is pending assignment to a picker. Thank you for helping keep your community clean!",
-                'message_type'       => 'waste_added',
-            ]);
+            // Notification::create([
+            //     'resident_id'        => $collection->resident_id,
+            //     'waste_collector_id' => null,
+            //     'title'              => 'Waste Added',
+            //     'message'            => "You added waste. Your request has been received and is pending assignment to a picker. Thank you for helping keep your community clean!",
+            //     'message_type'       => 'waste_added',
+            // ]);
 
             return response()->json([
                 'status' => true,
@@ -228,12 +228,13 @@ class CollectionController extends Controller
 
                 $resident = $collection->resident_id;
                 
-                $referenceNo = Str::uuid()->toString();
+                $referenceNo = strtoupper(Str::uuid()->toString());
+                $referenceNo = substr($referenceNo, 0, 5);
 
                 //get resident’s current total before this assignment
-                $previousTotal = Earning::where('resident_id', $resident)->sum('earning');
+                $previousTotal = Earning::where('resident_id', $resident)->sum('total_earning');
 
-                $previousTotal1 = Earning::where('waste_collector_id', $pickerId)->sum('earning');
+                $previousTotal1 = Earning::where('waste_collector_id', $pickerId)->sum('total_earning');
 
                 //create earning for resident.
                 Earning::create([
