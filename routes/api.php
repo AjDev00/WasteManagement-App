@@ -163,3 +163,7 @@ Route::post('/message', [MessagingController::class, 'storeMessage']);
 Route::get('/message/{id}', [MessagingController::class, 'showMessage']);
 Route::get('/messages', [MessagingController::class, 'showAllMessage']);
 Route::put('/message/{id}', [MessagingController::class, 'updateMessage']);
+
+Route::get('/test', function () {
+    return 'Laravel is working!';
+});
