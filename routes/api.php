@@ -3,12 +3,14 @@
 use App\Http\Controllers\AccountDetailController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\DepositWasteController;
 use App\Http\Controllers\EarningController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\RecyclerCompanyController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\SummaryController;
@@ -40,6 +42,10 @@ Route::get('/picker', function (Request $request) {
 Route::get('/super', function (Request $request) {
     return $request->supervisor();
 })->middleware('auth:supervisor');
+
+Route::get('/recycler', function (Request $request) {
+    return $request->recycler();
+})->middleware('auth:recycler');
 
 Route::get('/summary/{residentId}', [SummaryController::class, 'weeklySummary']);
 
@@ -152,17 +158,14 @@ Route::get('/filter_by_paid/{id}', [WasteInvoiceController::class, 'filterByPaid
 Route::get('/waste_invoices', [WasteInvoiceController::class, 'showAllWasteInvoice']);
 Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteInvoice']);
 
-//Feedback Routes.
-Route::post('/feedback', [FeedbackController::class, 'storeFeedback']);
-Route::get('/feedback/{id}', [FeedbackController::class, 'showFeedback']);
-Route::get('/feedbacks', [FeedbackController::class, 'showAllFeedback']);
-Route::put('/feedback/{id}', [FeedbackController::class, 'updateFeedback']);
-
-//Messaging Routes.
-Route::post('/message', [MessagingController::class, 'storeMessage']);
-Route::get('/message/{id}', [MessagingController::class, 'showMessage']);
-Route::get('/messages', [MessagingController::class, 'showAllMessage']);
-Route::put('/message/{id}', [MessagingController::class, 'updateMessage']);
+//recycler company routes.
+Route::post('/recycler-company', [RecyclerCompanyController::class, 'storeRecyclerCompany']);
+Route::post('/loginRecyclerCompany', [RecyclerCompanyController::class, 'loginRecyclerCompany']);
+Route::post('/deposit-waste', [DepositWasteController::class, 'storeDepositWaste']);
+Route::get('/recycler-companies', [RecyclerCompanyController::class, 'showAllRecyclerCompany']);
+Route::get('/filter-company-by-name/{name}', [RecyclerCompanyController::class, 'filterCompanyByName']);
+Route::put('/updateRecyclers/{id}', [RecyclerCompanyController::class, 'updateRecyclerCompany']);
+Route::post('/logout', [RecyclerCompanyController::class, 'logout'])->middleware('auth:recycler');
 
 Route::get('/test', function () {
     return 'Laravel is working!';

@@ -54,6 +54,11 @@ return [
         'supervisor' => [
             'driver' => 'sanctum',
             'provider' => 'supervisor',
+        ],
+
+        'recycler' => [
+            'driver' => 'sanctum',
+            'provider' => 'recyclers',
         ]
     ],
 
@@ -93,6 +98,11 @@ return [
         'supervisor' => [
             'driver' => 'eloquent',
             'model' => App\Models\Supervisor::class,
+        ],
+
+        'recyclers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\RecyclerCompany::class,
         ],
 
         // 'users' => [

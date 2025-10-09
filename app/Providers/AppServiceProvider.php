@@ -31,5 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Request::macro('supervisor', function() {
             return auth('supervisor')->user();
         });
+
+        Request::macro('recycler', function() {
+            return auth('recycler')->user();
+        });
     }
 }
