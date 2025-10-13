@@ -94,6 +94,8 @@ Route::post('/resident/login', [ResidentController::class, 'loginResident']);
 Route::get('/resident/{id}', [ResidentController::class, 'showResident']);
 Route::get('/residents', [ResidentController::class, 'showAllResidents']);
 Route::put('/resident/{id}', [ResidentController::class, 'updateResident']);
+Route::post('/forgotPwd-R', [ResidentController::class, 'forgotPassword']);
+Route::post('/changePwd-R', [ResidentController::class, 'changePassword']);
 Route::post('/logout', [ResidentController::class, 'logout'])->middleware('auth:resident');
 
 // Waste Collectors routes.
@@ -103,6 +105,8 @@ Route::get('/all-collection', [WasteCollectorController::class, 'showAllCollecti
 Route::get('/waste-collector/{id}', [WasteCollectorController::class, 'showWasteCollector']);
 Route::get('/waste-collectors', [WasteCollectorController::class, 'showAllWasteCollector']);
 Route::put('/waste-collector/{id}', [WasteCollectorController::class, 'updateWasteCollector']);
+Route::post('/forgotPwd-WC', [WasteCollectorController::class, 'forgotPasswordWC']);
+Route::post('/changePwd-WC', [WasteCollectorController::class, 'changePasswordWC']);
 Route::post('/logoutW', [WasteCollectorController::class, 'logout'])->middleware('auth:waste_collector');
 
 // Type routes.
@@ -131,6 +135,7 @@ Route::post('/logoutS', [SupervisorController::class, 'logout'])->middleware('au
 Route::get('/supervisor/{id}', [SupervisorController::class, 'showSupervisor']);
 Route::get('/supervisors', [SupervisorController::class, 'showAllSupervisor']);
 Route::put('/supervisor/{id}', [SupervisorController::class, 'updateSupervisor']);
+Route::post('/forgotPwd-S', [SupervisorController::class, 'forgotPasswordS']);
 
 // Collection routes.
 Route::post('/collection', [CollectionController::class, 'storeCollection']);
@@ -162,10 +167,14 @@ Route::put('/waste_invoice/{id}', [WasteInvoiceController::class, 'updateWasteIn
 Route::post('/recycler-company', [RecyclerCompanyController::class, 'storeRecyclerCompany']);
 Route::post('/loginRecyclerCompany', [RecyclerCompanyController::class, 'loginRecyclerCompany']);
 Route::post('/deposit-waste', [DepositWasteController::class, 'storeDepositWaste']);
+Route::get('/get-waste/{recycler_company_id}', [DepositWasteController::class, 'displayDepositWaste']);
 Route::get('/recycler-companies', [RecyclerCompanyController::class, 'showAllRecyclerCompany']);
 Route::get('/filter-company-by-name/{name}', [RecyclerCompanyController::class, 'filterCompanyByName']);
 Route::put('/updateRecyclers/{id}', [RecyclerCompanyController::class, 'updateRecyclerCompany']);
-Route::post('/logout', [RecyclerCompanyController::class, 'logout'])->middleware('auth:recycler');
+Route::get('/completed-recycler-stats/{recycler_company_id}', [ReportController::class, 'completedRecyclerStats']);
+Route::post('/forgotPwd-RC', [RecyclerCompanyController::class, 'forgotPasswordRC']);
+Route::post('/changePwd-RC', [RecyclerCompanyController::class, 'changePasswordRC']);
+Route::post('/logoutR', [RecyclerCompanyController::class, 'logout'])->middleware('auth:recycler');
 
 Route::get('/test', function () {
     return 'Laravel is working!';

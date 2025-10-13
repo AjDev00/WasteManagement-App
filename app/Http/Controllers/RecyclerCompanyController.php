@@ -39,6 +39,113 @@ class RecyclerCompanyController extends Controller
         ]);
     }
 
+    public function forgotPasswordRC(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        //check if the recycler_company exists
+        $recycler_company = RecyclerCompany::where('email', $request->email)->first();
+
+        if(!$recycler_company){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } else if($recycler_company && Hash::check($request->password, $recycler_company->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } else if($recycler_company && !Hash::check($request->password, $recycler_company->password)){
+
+            $recycler_company->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'
+            ]);
+        } 
+
+        // if(!$recycler_company || !Hash::check($request->password, $recycler_company->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = recycler_company::where('email', $email)->first('password');
+
+
+    }
+
+    public function changePasswordRC(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'old_password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        //check if the recycler_company exists
+        $recycler_company = RecyclerCompany::where('email', $request->email)->first();
+
+        //email does not exist.
+        if(!$recycler_company){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } 
+        
+        //email exists, but old password does not match previous.
+        else if($recycler_company && !Hash::check($request->old_password, $recycler_company->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password incorrect'
+            ]);
+        }
+
+        //email exists, but old password cannot be the same as new password.
+        else if($recycler_company && Hash::check($request->new_password, $recycler_company->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } 
+        
+        //email exists and the new password is not the same as the old password.
+        else if($recycler_company && !Hash::check($request->new_password, $recycler_company->password)){
+
+            $recycler_company->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password changed successfully'
+            ]);
+        } 
+
+        // if(!$recycler_company || !Hash::check($request->password, $recycler_company->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = recycler_company::where('email', $email)->first('password');
+
+
+    }
+
     //login a waste collector.
     public function loginRecyclerCompany(Request $request){
         $request->validate([
@@ -108,9 +215,8 @@ class RecyclerCompanyController extends Controller
             'firstname' => 'required|string|min:3',
             'lastname' => 'required|string|min:3',
             'address'  => 'required|string|min:7',
-            'email' => 'required|email|unique:recycler_companies,email',
-            'phone_number' => 'required|min:10|max:15|unique:recycler_companies,phone_number',
-            'password' => 'required|string|min:8',
+            'email' => 'required|email',
+            'phone_number' => 'required|min:10|max:15',
         ]);
 
         if($validator->fails()){

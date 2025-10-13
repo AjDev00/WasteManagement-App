@@ -33,6 +33,51 @@ class SupervisorController extends Controller
         ]);
     }
 
+    public function forgotPasswordS(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        //check if the supervisor exists
+        $supervisor = Supervisor::where('email', $request->email)->first();
+
+        if(!$supervisor){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } else if($supervisor && Hash::check($request->password, $supervisor->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } else if($supervisor && !Hash::check($request->password, $supervisor->password)){
+
+            $supervisor->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'
+            ]);
+        } 
+
+        // if(!$supervisor || !Hash::check($request->password, $supervisor->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = supervisor::where('email', $email)->first('password');
+
+
+    }
+
     //login
     public function loginSupervisor(Request $request){
         $request->validate([

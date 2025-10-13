@@ -60,6 +60,113 @@ class ResidentController extends Controller
         ]);
     }
 
+    public function forgotPassword(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        //check if the resident exists
+        $resident = Resident::where('email', $request->email)->first();
+
+        if(!$resident){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } else if($resident && Hash::check($request->password, $resident->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } else if($resident && !Hash::check($request->password, $resident->password)){
+
+            $resident->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'
+            ]);
+        } 
+
+        // if(!$resident || !Hash::check($request->password, $resident->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = Resident::where('email', $email)->first('password');
+
+
+    }
+
+    public function changePassword(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'old_password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        //check if the resident exists
+        $resident = Resident::where('email', $request->email)->first();
+
+        //email does not exist.
+        if(!$resident){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } 
+        
+        //email exists, but old password does not match previous.
+        else if($resident && !Hash::check($request->old_password, $resident->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password incorrect'
+            ]);
+        }
+
+        //email exists, but old password cannot be the same as new password.
+        else if($resident && Hash::check($request->new_password, $resident->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } 
+        
+        //email exists and the new password is not the same as the old password.
+        else if($resident && !Hash::check($request->new_password, $resident->password)){
+
+            $resident->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password changed successfully'
+            ]);
+        } 
+
+        // if(!$resident || !Hash::check($request->password, $resident->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = Resident::where('email', $email)->first('password');
+
+
+    }
+
     //show a single resident by ID
     public function showResident($id){
         $resident = Resident::find($id);
@@ -107,9 +214,8 @@ class ResidentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'fullname' => 'required|string|min:3',
-            'phone_number' => 'required|min:10|max:15|unique:residents,phone_number',
-            'email' => 'required|email|unique:residents,email,',
-            'password' => 'required|string|min:8',
+            'phone_number' => 'required|min:10|max:15',
+            'email' => 'required|email',
         ]);
 
         //error handling

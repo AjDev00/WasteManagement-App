@@ -97,4 +97,21 @@ class DepositWasteController extends Controller
             ]);
         });
     }
+
+    //show all waste deposited to a company.
+    public function displayDepositWaste($recycler_company_id){
+        $deposit_waste = DepositWaste::where('recycler_company_id', $recycler_company_id)->get();
+
+        if($deposit_waste->isEmpty()){
+            return response()->json([
+                'status' => false,
+                'message' => 'No waste has been deposited with you!'
+            ]);   
+        } else{
+            return response()->json([
+                'status' => true,
+                'data' => $deposit_waste
+            ]);
+        }
+    }
 }

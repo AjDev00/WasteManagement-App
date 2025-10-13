@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\DepositWaste;
 use Illuminate\Http\Request;
 use App\Models\WasteInvoice;
 use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+    //report controller for PICKERS.
     public function completedStats($waste_collector_id)
     {
         $today = Carbon::today();
@@ -46,6 +48,32 @@ class ReportController extends Controller
             'today_collection' => $todayCollection,
             'this_week' => $weekCount,
             'this_week_collection' => $weekCollection,
+            'total_completed' => $totalCount,
+        ]);
+    }
+
+    //report controller for RECYCLERS.
+    public function completedRecyclerStats($recycler_company_id)
+    {
+        $today = Carbon::today();
+        $weekStart = Carbon::now()->startOfWeek();
+        $weekEnd = Carbon::now()->endOfWeek();
+
+        $todayCount = DepositWaste::where('recycler_company_id', $recycler_company_id)
+            ->whereDate('deposited_at', $today)
+            ->count();
+
+        $weekCount = DepositWaste::where('recycler_company_id', $recycler_company_id)
+            ->whereBetween('deposited_at', [$weekStart, $weekEnd])
+            ->count();
+        
+        $totalCount = DepositWaste::where('recycler_company_id', $recycler_company_id)
+            ->get()
+            ->count();
+
+        return response()->json([
+            'today' => $todayCount,
+            'this_week' => $weekCount,
             'total_completed' => $totalCount,
         ]);
     }

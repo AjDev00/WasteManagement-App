@@ -38,6 +38,113 @@ class WasteCollectorController extends Controller
         ]);
     }
 
+    public function forgotPasswordWC(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        //check if the waste_collector exists
+        $waste_collector = WasteCollector::where('email', $request->email)->first();
+
+        if(!$waste_collector){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } else if($waste_collector && Hash::check($request->password, $waste_collector->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } else if($waste_collector && !Hash::check($request->password, $waste_collector->password)){
+
+            $waste_collector->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'
+            ]);
+        } 
+
+        // if(!$waste_collector || !Hash::check($request->password, $waste_collector->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = waste_collector::where('email', $email)->first('password');
+
+
+    }
+
+    public function changePasswordWC(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'old_password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        //check if the waste_collector exists
+        $waste_collector = WasteCollector::where('email', $request->email)->first();
+
+        //email does not exist.
+        if(!$waste_collector){
+
+            return response()->json([
+                'status' => 'false',
+                'message' => 'Email incorrect'
+            ]);
+        } 
+        
+        //email exists, but old password does not match previous.
+        else if($waste_collector && !Hash::check($request->old_password, $waste_collector->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password incorrect'
+            ]);
+        }
+
+        //email exists, but old password cannot be the same as new password.
+        else if($waste_collector && Hash::check($request->new_password, $waste_collector->password)){
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password cant be the same as new password'
+            ]);
+        } 
+        
+        //email exists and the new password is not the same as the old password.
+        else if($waste_collector && !Hash::check($request->new_password, $waste_collector->password)){
+
+            $waste_collector->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password changed successfully'
+            ]);
+        } 
+
+        // if(!$waste_collector || !Hash::check($request->password, $waste_collector->password)){
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Email or password incorrect'
+        //     ]);
+        // }
+
+        // $getPassword = waste_collector::where('email', $email)->first('password');
+
+
+    }
+
     //login a waste collector.
     public function loginWasteCollector(Request $request){
         $request->validate([
@@ -128,9 +235,8 @@ class WasteCollectorController extends Controller
     $validator = Validator::make($request->all(), [
        'firstname' => 'required|string|min:3',
         'lastname' => 'required|string|min:3',
-        'email' => 'required|email|unique:waste_collectors,email',
-        'phone_number' => 'required|min:10|max:15|unique:waste_collectors,phone_number',
-        'password' => 'required|string|min:8',
+        'email' => 'required|email',
+        'phone_number' => 'required|min:10|max:15',
     ]);
 
     if($validator->fails()){
