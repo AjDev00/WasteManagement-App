@@ -81,14 +81,15 @@ class DepositWasteController extends Controller
             }
 
             //recycler notification
-            // Notification::create([
-            //     'resident_id'        => null,
-            //     'waste_collector_id' => null,
-            //     'recycler_company_id'=> $depositData->recycler_company_id,
-            //     'title'              => 'Waste is coming',
-            //     'message'            => "A picker chose your company to come deposit his waste. Happy staying clean!",
-            //     'message_type'       => 'waste_added',
-            // ]);
+            Notification::create([
+                'resident_id'        => null,
+                'waste_collector_id' => null,
+                'recycler_company_id'=> $invoiceData['recycler_company_id'],
+                'title'              => 'Waste is coming',
+                'message'            => "A picker chose your company to come deposit his waste. Happy staying clean!",
+                'message_type'       => 'waste_added',
+            ]);
+
 
             return response()->json([
                 'status' => true,

@@ -60,11 +60,11 @@ class ReportController extends Controller
         $weekEnd = Carbon::now()->endOfWeek();
 
         $todayCount = DepositWaste::where('recycler_company_id', $recycler_company_id)
-            ->whereDate('deposited_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         $weekCount = DepositWaste::where('recycler_company_id', $recycler_company_id)
-            ->whereBetween('deposited_at', [$weekStart, $weekEnd])
+            ->whereBetween('created_at', [$weekStart, $weekEnd])
             ->count();
         
         $totalCount = DepositWaste::where('recycler_company_id', $recycler_company_id)

@@ -9,6 +9,7 @@ class Notification extends Model
     protected $fillable = [
         'resident_id',
         'waste_collector_id',
+        'recycler_company_id',
         'title',
         'message',
         'message_type',

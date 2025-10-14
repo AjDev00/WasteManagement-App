@@ -86,7 +86,9 @@ Route::get('/notifications/{resident_id}', [NotificationController::class, 'show
 Route::delete('/deleteNot/{id}', [NotificationController::class, 'deleteNotification']);
 Route::put('/notification/{id}/read', [NotificationController::class, 'isRead']);
 Route::get('/waste-collector-notifications/{waste_collector_id}', [NotificationController::class, 'showWasteCollectorNotifications']);
+Route::get('/rc-notifications/{recycler_company_id}', [NotificationController::class, 'showRCNotifications']);
 Route::delete('/waste-collector-notifications/{id}', [NotificationController::class, 'deleteWasteCollectorNotification']);
+Route::delete('/rc-notifications/{id}', [NotificationController::class, 'deleteRCNotification']);
 
 // Residents routes.
 Route::post('/resident', [ResidentController::class, 'storeResident']);

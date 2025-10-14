@@ -28,6 +28,26 @@ class NotificationController extends Controller
         ]);
     }
 
+    //show recyclers notifications.
+    public function showRCNotifications($recycler_company_id){
+        $notifications = Notification::where('recycler_company_id', $recycler_company_id)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+        if ($notifications->isNotEmpty()) {
+            return response()->json([
+                'status' => true,
+                'data'   => $notifications,
+                'count'  => $notifications->count(),
+            ]);
+        }
+
+        return response()->json([
+            'status'  => false,
+            'message' => "No notifications",
+        ]);
+    }
+
     //show waste collector notifications.
     public function showWasteCollectorNotifications($waste_collector_id){
         $notifications = Notification::with('resident') // eager-load resident details
@@ -51,6 +71,26 @@ class NotificationController extends Controller
 
     //delete resident notification.
     public function deleteNotification($id){
+        $notification = Notification::find($id);
+
+        if(!$notification){
+            return response()->json([
+                'status' => false,
+                'message' => 'Notification not found!'
+            ]);
+        }
+
+        $notification->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Notification deleted!'
+        ]);
+
+    }
+
+    //delete resident notification.
+    public function deleteRCNotification($id){
         $notification = Notification::find($id);
 
         if(!$notification){
