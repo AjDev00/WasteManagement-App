@@ -1,25 +1,41 @@
+<IfModule mime_module>
+    AddHandler application/x-httpd-alt-php82 .php
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /
 
-    # Handle Authorization Header
+    # Preserve headers
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
+    # Redirect trailing slashes
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    # === Serve SPA for root URL (so / shows public/spa/index.html) ===
+    RewriteRule ^$ /spa/index.html [L]
+
+    # If the requested resource exists as a file or folder, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # API requests -> Laravel front controller
+    RewriteRule ^api(/.*)?$ index.php [L,QSA]
+
+    # Direct PHP requests -> Laravel
+    RewriteRule \.php$ index.php [L,QSA]
+
+    # Everything else -> SPA index
+    RewriteRule ^ /spa/index.html [L]
 </IfModule>
